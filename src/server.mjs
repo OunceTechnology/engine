@@ -2,8 +2,6 @@ import bodyParser from 'body-parser';
 import { ServerConfig } from './config/server-config.mjs';
 import methodOverride from 'method-override';
 import logger from 'morgan';
-import dbSetup from '../dbSetup.mjs';
-import { routes } from '../routes.mjs';
 import { db } from './index.mjs';
 import notfound from './notfoundroutes.mjs';
 import serverController from './server-controller.mjs';
@@ -21,7 +19,7 @@ const program = {
   get server() {
     return this.server_;
   },
-  async run() {
+  async run(dbSetup, routes) {
     try {
       const serverConfig = await new ServerConfig().config();
 
@@ -49,7 +47,7 @@ const program = {
         jsonErrors,
       });
 
-      this.setupRoutes(app);
+      this.setupRoutes(app, routes);
       serverController.startServer({
         port,
         sslPort,
@@ -91,7 +89,7 @@ const program = {
     }
   },
 
-  setupRoutes(app) {
+  setupRoutes(app, routes) {
     let maxAge = '5m';
     if (app.get('env') === 'development') {
       maxAge = '0';
