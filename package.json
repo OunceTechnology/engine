@@ -1,0 +1,19 @@
+{
+  "name": "@ounce/engine",
+  "version": "1.1.0",
+  "description": "Ounce engine",
+  "module": "src/index.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OunceTechnology/engine.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/OunceTechnology/engine/issues"
+  },
+  "homepage": "https://github.com/OunceTechnology/engine#readme"
+}
