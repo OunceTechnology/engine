@@ -1,0 +1,13 @@
+* eol=lf
+* text=auto
+*.wav binary -delta
+*.JPG binary -delta
+*.jpg binary -delta
+*.png binary -delta
+*.mp4 binary -delta
+*.ttf binary -delta
+*.woff binary -delta
+*.woff2 binary -delta
+*.eot binary -delta
+*.odt binary -delta
+
