@@ -8,7 +8,8 @@ import {
   NotFoundError,
 } from './extendable-error.mjs';
 import notfound from './notfoundroutes.mjs';
-import serverController from './server-controller.mjs';
+import { program, serverController } from './server.mjs';
+
 
 import Passwords from './passwords.mjs';
 import JSONWebToken from './jsonwebtoken.mjs';
@@ -19,6 +20,8 @@ const toObjectId = db.toObjectId;
 import { databaseTeams } from './models/database-teams.mjs';
 import { databaseUsers, UserHelper } from './models/database-users.mjs';
 import RandomString from './lib/random-string.mjs';
+import sendmail from './lib/sendmail.mjs';
+import {jwtMiddleware} from './jwt-middleware.mjs'
 // import serverConfig from './config/server-config.mjs';
 
 export {
@@ -31,7 +34,7 @@ export {
   databaseUsers as Users,
   UserHelper,
   userUtils,
-  RandomString,
+  RandomString,sendmail,jwtMiddleware
 };
 
 export {
@@ -43,5 +46,6 @@ export {
   NotFoundError,
   checkError,
   serverController,
+  program,
   notfound,
 };

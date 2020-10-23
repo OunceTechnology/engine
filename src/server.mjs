@@ -137,17 +137,17 @@ process.on('SIGTERM', () => {
 
 const pgm = Object.create(program);
 // make it all happen
-const serverStartup = new Promise(resolve => {
-  pgm
-    .run()
-    .then(() => resolve())
-    .catch(e => {
-      console.dir(e);
-      console.error('Error: failed to start website');
-    });
-});
+// const serverStartup = new Promise(resolve => {
+//   pgm
+//     .run()
+//     .then(() => resolve())
+//     .catch(e => {
+//       console.dir(e);
+//       console.error('Error: failed to start website');
+//     });
+// });
 
-export { pgm as program, serverController, serverStartup };
+export { pgm as program, serverController };
 
 // ===
 // Private functions
