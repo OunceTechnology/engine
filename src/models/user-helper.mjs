@@ -1,4 +1,5 @@
 import { db } from './db.mjs';
+
 class UserHelper {
   static create() {
     const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();

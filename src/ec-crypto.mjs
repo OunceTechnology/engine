@@ -18,30 +18,27 @@ import crypto from 'crypto';
 const CURVE = 'prime256v1';
 
 // https://tools.ietf.org/html/rfc5915#section-3
-const ECPrivateKeyASN = asn1.define('ECPrivateKey', function() {
+const ECPrivateKeyASN = asn1.define('ECPrivateKey', function () {
   this.seq().obj(
     this.key('version').int(),
     this.key('privateKey').octstr(),
-    this.key('parameters')
-      .explicit(0)
-      .objid()
-      .optional(),
-    this.key('publicKey')
-      .explicit(1)
-      .bitstr()
-      .optional(),
+    this.key('parameters').explicit(0).objid().optional(),
+    this.key('publicKey').explicit(1).bitstr().optional(),
   );
 });
 
 // https://tools.ietf.org/html/rfc3280#section-4.1
-const SubjectPublicKeyInfoASN = asn1.define('SubjectPublicKeyInfo', function() {
-  this.seq().obj(
-    this.key('algorithm')
-      .seq()
-      .obj(this.key('id').objid(), this.key('namedCurve').objid()),
-    this.key('pub').bitstr(),
-  );
-});
+const SubjectPublicKeyInfoASN = asn1.define(
+  'SubjectPublicKeyInfo',
+  function () {
+    this.seq().obj(
+      this.key('algorithm')
+        .seq()
+        .obj(this.key('id').objid(), this.key('namedCurve').objid()),
+      this.key('pub').bitstr(),
+    );
+  },
+);
 
 // Chosen because it is _must_ implement.
 // https://tools.ietf.org/html/rfc5480#section-2.1.1

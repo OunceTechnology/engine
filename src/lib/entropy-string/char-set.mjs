@@ -1,7 +1,6 @@
 import lcm from './lcm.mjs';
 
 const propMap = new WeakMap();
-
 const BITS_PER_BYTE = 8;
 
 export default class CharSet {
@@ -55,7 +54,7 @@ export default class CharSet {
 
   bytesNeeded(entropyBits) {
     const count = Math.ceil(entropyBits / this.bitsPerChar());
-    return Math.ceil(count * this.bitsPerChar() / BITS_PER_BYTE);
+    return Math.ceil((count * this.bitsPerChar()) / BITS_PER_BYTE);
   }
 
   // Aliases
@@ -74,7 +73,7 @@ const _ndxFn = bitsPerChar => {
   // If BITS_PER_BYTEs is a multiple of bitsPerChar, we can slice off an integer number
   // of chars per byte.
   if (lcm(bitsPerChar, BITS_PER_BYTE) === BITS_PER_BYTE) {
-    return function(chunk, slice, bytes) {
+    return function (chunk, slice, bytes) {
       const lShift = bitsPerChar;
       const rShift = BITS_PER_BYTE - bitsPerChar;
       return ((bytes[chunk] << (lShift * slice)) & 0xff) >> rShift;
@@ -84,10 +83,10 @@ const _ndxFn = bitsPerChar => {
   // Otherwise, while slicing off bits per char, we will possibly straddle a couple
   // of bytes, so a bit more work is involved
   const slicesPerChunk = lcm(bitsPerChar, BITS_PER_BYTE) / BITS_PER_BYTE;
-  return function(chunk, slice, bytes) {
+  return function (chunk, slice, bytes) {
     const bNum = chunk * slicesPerChunk;
 
-    const offset = slice * bitsPerChar / BITS_PER_BYTE;
+    const offset = (slice * bitsPerChar) / BITS_PER_BYTE;
     const lOffset = Math.floor(offset);
     const rOffset = Math.ceil(offset);
 
@@ -96,7 +95,9 @@ const _ndxFn = bitsPerChar => {
 
     let ndx = ((bytes[bNum + lOffset] << lShift) & 0xff) >> rShift;
 
-    const rShiftIt = ((rOffset + 1) * BITS_PER_BYTE - (slice + 1) * bitsPerChar) % BITS_PER_BYTE;
+    const rShiftIt =
+      ((rOffset + 1) * BITS_PER_BYTE - (slice + 1) * bitsPerChar) %
+      BITS_PER_BYTE;
     if (rShift < rShiftIt) {
       ndx += bytes[bNum + rOffset] >> rShiftIt;
     }
@@ -104,7 +105,9 @@ const _ndxFn = bitsPerChar => {
   };
 };
 
-export const charSet64 = new CharSet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_');
+export const charSet64 = new CharSet(
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_',
+);
 export const charSet32 = new CharSet('2346789bdfghjmnpqrtBDFGHJLMNPQRT');
 export const charSet16 = new CharSet('0123456789abcdef');
 export const charSet8 = new CharSet('01234567');

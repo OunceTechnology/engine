@@ -6,5 +6,5 @@ const _gcd = (a, b) => {
 };
 
 export default (a, b) => {
-  return a / _gcd(a, b) * b;
+  return (a / _gcd(a, b)) * b;
 };

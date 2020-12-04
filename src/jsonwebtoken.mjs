@@ -1,9 +1,8 @@
 import assert from 'assert';
 import jwt from 'jsonwebtoken';
-import uuid from 'uuid';
-import Database from './models/database.mjs';
+import { v4 as uuidv4 } from 'uuid';
 import ec from './ec-crypto.mjs';
-// import Settings from './settings';
+import Database from './models/database.mjs';
 
 const issuer = 'ounce.ac';
 
@@ -102,7 +101,7 @@ class JSONWebToken {
   static async create(user, payload = { role: ROLE_USER_TOKEN }) {
     const pair = ec.generateKeyPair();
 
-    const keyId = uuid.v4();
+    const keyId = uuidv4();
     // const tunnelInfo = await Settings.getTunnelInfo();
     // const issuer = tunnelInfo.tunnelDomain;
     const options = {

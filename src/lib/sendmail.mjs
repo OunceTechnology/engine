@@ -1,7 +1,7 @@
+import serverConfig from 'config';
 import Email from 'email-templates';
 import nodemailer from 'nodemailer';
 import path from 'path';
-import serverConfig from 'config';
 import pickupTransport from './pickup-transport.mjs';
 
 let transporter;

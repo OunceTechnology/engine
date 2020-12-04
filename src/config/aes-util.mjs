@@ -8,7 +8,10 @@ const aesUtil = {
     }
     const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv(algorithm_, key, iv);
-    const encrypted = Buffer.concat([cipher.update(text, encoding), cipher.final()]);
+    const encrypted = Buffer.concat([
+      cipher.update(text, encoding),
+      cipher.final(),
+    ]);
     const tag = cipher.getAuthTag();
 
     return Buffer.concat([iv, tag, encrypted]).toString('base64');
@@ -24,7 +27,10 @@ const aesUtil = {
       const authTag = bData.slice(12, 28);
       const decipher = crypto.createDecipheriv(algorithm_, key, iv);
       decipher.setAuthTag(authTag);
-      return decipher.update(bData.slice(28), 'binary', encoding) + decipher.final(encoding);
+      return (
+        decipher.update(bData.slice(28), 'binary', encoding) +
+        decipher.final(encoding)
+      );
     } catch (e) {
       console.dir(e);
     }

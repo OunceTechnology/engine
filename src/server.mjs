@@ -1,7 +1,7 @@
 import bodyParser from 'body-parser';
-import { ServerConfig } from './config/server-config.mjs';
 import methodOverride from 'method-override';
 import logger from 'morgan';
+import { ServerConfig } from './config/server-config.mjs';
 import { db } from './index.mjs';
 import notfound from './notfoundroutes.mjs';
 import serverController from './server-controller.mjs';

@@ -15,7 +15,7 @@ const Promise = global.Promise;
 
 const { handle_request, handle_error } = Layer.prototype;
 
-Layer.prototype.handle_request = function(...args) {
+Layer.prototype.handle_request = function (...args) {
   // This only happens once when the router is evaluated for the first time against a request.
   this.handle = wrapHandler(this.handle);
 
@@ -23,7 +23,7 @@ Layer.prototype.handle_request = function(...args) {
   return this.handle_request(...args);
 };
 
-Layer.prototype.handle_error = function(...args) {
+Layer.prototype.handle_error = function (...args) {
   this.handle = wrapHandler(this.handle);
   this.handle_error = handle_error;
   return this.handle_error(...args);

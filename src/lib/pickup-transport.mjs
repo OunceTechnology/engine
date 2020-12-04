@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 
 // expose to the world
-export default function(options) {
+export default function (options) {
   return new PickupTransport(options);
 }
 
@@ -28,7 +28,7 @@ class PickupTransport {
     const target = path.join(this.options.directory, filename);
     const output = fs.createWriteStream(target);
     const input = mail.message.createReadStream();
-    const _onError = function(err) {
+    const _onError = function (err) {
       if (callbackSent) {
         return;
       }
@@ -36,7 +36,7 @@ class PickupTransport {
       callback(err);
     };
     input.on('error', _onError);
-    input.on('end', function() {
+    input.on('end', function () {
       if (callbackSent) {
         return;
       }

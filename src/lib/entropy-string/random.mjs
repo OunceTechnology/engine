@@ -15,7 +15,9 @@ export default class {
     } else if (typeof arg === 'string' || arg instanceof String) {
       charSet = new CharSet(arg);
     } else {
-      throw new Error('Invalid arg: must be either valid CharSet or valid chars');
+      throw new Error(
+        'Invalid arg: must be either valid CharSet or valid chars',
+      );
     }
     const hideProps = {
       charSet,
@@ -45,12 +47,20 @@ export default class {
 
   string(entropyBits, charSet = propMap.get(this).charSet) {
     const bytesNeeded = charSet.bytesNeeded(entropyBits);
-    return this.stringWithBytes(entropyBits, _cryptoBytes(bytesNeeded), charSet);
+    return this.stringWithBytes(
+      entropyBits,
+      _cryptoBytes(bytesNeeded),
+      charSet,
+    );
   }
 
   stringRandom(entropyBits, charSet = propMap.get(this).charSet) {
     const bytesNeeded = charSet.bytesNeeded(entropyBits);
-    return this.stringWithBytes(entropyBits, _randomBytes(bytesNeeded), charSet);
+    return this.stringWithBytes(
+      entropyBits,
+      _randomBytes(bytesNeeded),
+      charSet,
+    );
   }
 
   stringWithBytes(entropyBits, bytes, charSet = propMap.get(this).charSet) {
@@ -93,7 +103,9 @@ const _stringWithBytes = (entropyBits, bytes, charSet) => {
 
   const need = Math.ceil(count * (bitsPerChar / BITS_PER_BYTE));
   if (bytes.length < need) {
-    throw new Error('Insufficient bytes: need ' + need + ' and got ' + bytes.length);
+    throw new Error(
+      'Insufficient bytes: need ' + need + ' and got ' + bytes.length,
+    );
   }
 
   const charsPerChunk = charSet.getCharsPerChunk();
