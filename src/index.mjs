@@ -18,6 +18,7 @@ import userUtils from './models/user-utils.mjs';
 import notfound from './notfoundroutes.mjs';
 import Passwords from './passwords.mjs';
 import { program, serverController } from './server.mjs';
+import { logger } from './logger.mjs';
 
 const toObjectId = db.toObjectId;
 
@@ -34,6 +35,7 @@ export {
   RandomString,
   sendmail,
   jwtMiddleware,
+  logger,
 };
 export {
   db,

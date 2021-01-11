@@ -1,6 +1,8 @@
 import bodyParser from 'body-parser';
 import methodOverride from 'method-override';
-import logger from 'morgan';
+import logger from './logger.mjs';
+import pinoHttp from 'pino-http';
+
 import { ServerConfig } from './config/server-config.mjs';
 import { db } from './index.mjs';
 import notfound from './notfoundroutes.mjs';
@@ -14,6 +16,8 @@ const expressOptions_ = {
     },
   },
 };
+
+const pino = pinoHttp({ logger });
 
 const program = {
   get server() {
@@ -93,7 +97,7 @@ const program = {
     let maxAge = '5m';
     if (app.get('env') === 'development') {
       maxAge = '0';
-      app.use(logger('dev'));
+      app.use(pino);
     }
 
     app.use(
