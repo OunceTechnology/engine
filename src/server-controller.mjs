@@ -9,6 +9,7 @@ import https from 'https';
 import path from 'path';
 import favicon from 'serve-favicon';
 import './express-async.mjs';
+import { logger } from './logger.mjs';
 
 const _defaultCspDirectives = {
   defaultSrc: [`'self'`],
@@ -75,7 +76,7 @@ const ServerController = {
     const server = http.createServer(app).listen(port, () => {
       const serverPort = server.address().port;
 
-      console.warn(`Express server listening on port ${serverPort}`);
+      logger.info(`Express server listening on port ${serverPort}`);
     });
 
     this.expressServer = server;
@@ -99,7 +100,7 @@ const ServerController = {
       const servers = https.createServer(options, app).listen(sslPort, () => {
         const serverPort = servers.address().port;
 
-        console.warn(`Express https server listening on port ${serverPort}`);
+        logger.info(`Express https server listening on port ${serverPort}`);
       });
 
       this.expressServers = servers;

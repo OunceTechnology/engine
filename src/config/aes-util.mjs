@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import util from 'util';
+import { logger } from '../logger.mjs';
 
 const algorithm_ = 'aes-256-gcm';
 
@@ -34,7 +35,7 @@ const aesUtil = {
         decipher.final(encoding)
       );
     } catch (e) {
-      console.warn(util.inspect(e));
+      logger.warn(util.inspect(e));
     }
 
     return null;

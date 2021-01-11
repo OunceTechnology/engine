@@ -1,4 +1,5 @@
 import { ExtendableError } from './extendable-error.mjs';
+import { logger } from './logger.mjs';
 
 function notfound(serverController) {
   const app = serverController.expressApp;
@@ -22,7 +23,7 @@ function notfound(serverController) {
       return sendResponse({ res, code, message, key });
     }
 
-    console.warn('404');
+    logger.warn('404');
     if (err.status !== undefined) {
       const { message, status: code } = err;
 
@@ -39,7 +40,7 @@ function notfound(serverController) {
     }
     // log it;
     // send emails if you want;
-    console.error(`errchk: ${err.stack || err.message || err}`);
+    logger.error(`errchk: ${err.stack || err.message || err}`);
 
     // error page;
 

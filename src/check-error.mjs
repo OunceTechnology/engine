@@ -1,4 +1,5 @@
 import util from 'util';
+import { logger } from './logger.mjs';
 import { ValidationError } from './extendable-error.mjs';
 
 function checkError(res) {
@@ -7,7 +8,7 @@ function checkError(res) {
       return res.status(422).send({ message: e.message });
     }
 
-    console.warn(util.inspect(e));
+    logger.warn(util.inspect(e));
     res.sendStatus(500);
   };
 }

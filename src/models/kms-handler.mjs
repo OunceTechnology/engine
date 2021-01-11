@@ -1,4 +1,5 @@
 import mce from 'mongodb-client-encryption';
+import { logger } from '../logger.mjs';
 
 const ENC_DETERM = 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic';
 const ENC_RANDOM = 'AEAD_AES_256_CBC_HMAC_SHA_512-Random';
@@ -53,7 +54,7 @@ class KmsHandler {
           },
         });
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       process.exit(1);
     }
   }

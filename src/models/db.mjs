@@ -3,6 +3,7 @@ import mongodb from 'mongodb';
 import path from 'path';
 import util from 'util';
 import { KmsHandler } from './kms-handler.mjs';
+import { logger } from '../logger.mjs';
 
 const MongoClient = mongodb.MongoClient;
 
@@ -74,13 +75,13 @@ const db_ = {
         return client.db(database);
       })
       .then(db => {
-        console.warn('Connected to database server.');
+        logger.info('Connected to database server.');
         db.on('reconnect', e => {
-          console.warn(`reconnect: ${e && e.message}`);
+          logger.warn(`reconnect: ${e && e.message}`);
         });
 
         db.on('error', e => {
-          console.warn(`error: ${e && e.message}`);
+          logger.warn(`error: ${e && e.message}`);
         });
         dbx = db;
         return db;

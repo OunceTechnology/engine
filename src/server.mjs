@@ -1,11 +1,11 @@
 import bodyParser from 'body-parser';
 import methodOverride from 'method-override';
-import { logger, createLogger } from './logger.mjs';
+import util from 'util';
 import { ServerConfig } from './config/server-config.mjs';
 import { db } from './index.mjs';
+import { createLogger, logger } from './logger.mjs';
 import notfound from './notfoundroutes.mjs';
 import serverController from './server-controller.mjs';
-import util from 'util';
 
 const expressOptions_ = {
   engine: {
@@ -71,7 +71,7 @@ const program = {
 
       this.server_ = serverController.expressServer;
     } catch (e) {
-      console.warn(util.inspect(e));
+      logger.warn(util.inspect(e));
       throw new Error('Error: failed to initialise website');
     }
   },
@@ -79,7 +79,7 @@ const program = {
   async shutdown() {
     serverController.stopServer().then(() => {
       db.dispose();
-      console.warn('server is stopping');
+      logger.info('server is stopping');
     });
   },
 
@@ -99,7 +99,7 @@ const program = {
         },
       );
     } catch (error) {
-      console.warn(util.inspect(error));
+      logger.warn(util.inspect(error));
       db.dispose();
       throw Error('Error: cannot connect to database');
     }
@@ -137,13 +137,13 @@ const program = {
   },
 };
 process.on('SIGTERM', () => {
-  console.warn('shutdown started');
+  logger.info('shutdown started');
 
   serverController
     .stopServer()
     .then(() => {
       db.dispose();
-      console.warn('process is stopping');
+      logger.warn('process is stopping');
 
       process.exit(0);
     })

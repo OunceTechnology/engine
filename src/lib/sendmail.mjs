@@ -3,6 +3,7 @@ import Email from 'email-templates';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import util from 'util';
+import { logger } from '../logger.mjs';
 import pickupTransport from './pickup-transport.mjs';
 
 let transporter;
@@ -85,7 +86,7 @@ async function send(options = {}) {
       locals: options.locals,
     });
   } catch (error) {
-    console.warn(util.inspect(error));
+    logger.warn(util.inspect(error));
   }
 }
 

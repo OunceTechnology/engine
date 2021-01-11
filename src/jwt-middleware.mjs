@@ -1,5 +1,6 @@
 import JSONWebToken from './jsonwebtoken.mjs';
 import { databaseUsers as Users } from './models/database-users.mjs';
+import { logger } from './logger.mjs';
 
 const AUTH_TYPE = 'Bearer';
 
@@ -42,7 +43,7 @@ function extractJWTHeader(req) {
   }
   const [type, sig] = authorization.split(' ');
   if (type !== AUTH_TYPE) {
-    console.warn('JWT header extraction failed: invalid auth type');
+    logger.warn('JWT header extraction failed: invalid auth type');
     return false;
   }
   return sig;
@@ -80,7 +81,7 @@ function middleware() {
         next();
       })
       .catch(err => {
-        console.error('error running jwt middleware', err.stack);
+        logger.error('error running jwt middleware', err.stack);
         next(err);
       });
   };
