@@ -1,6 +1,6 @@
 import bodyParser from 'body-parser';
 import methodOverride from 'method-override';
-import logger from './logger.mjs';
+import { logger } from './logger.mjs';
 import pinoHttp from 'pino-http';
 
 import { ServerConfig } from './config/server-config.mjs';
