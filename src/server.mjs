@@ -1,12 +1,11 @@
 import bodyParser from 'body-parser';
 import methodOverride from 'method-override';
-import { logger } from './logger.mjs';
-import pinoHttp from 'pino-http';
-
+import { logger, createLogger } from './logger.mjs';
 import { ServerConfig } from './config/server-config.mjs';
 import { db } from './index.mjs';
 import notfound from './notfoundroutes.mjs';
 import serverController from './server-controller.mjs';
+import util from 'util';
 
 const expressOptions_ = {
   engine: {
@@ -17,8 +16,6 @@ const expressOptions_ = {
   },
 };
 
-const pino = pinoHttp({ logger });
-
 const program = {
   get server() {
     return this.server_;
@@ -27,13 +24,6 @@ const program = {
     try {
       const serverConfig = await new ServerConfig().config();
 
-      const dbConfig = clone(serverConfig.db);
-
-      await this.initDb(dbConfig);
-      await dbSetup(db);
-
-      const app = serverController.expressApp;
-
       const {
         csp,
         cors,
@@ -41,7 +31,29 @@ const program = {
         jsonErrors,
         PORT: port,
         SSLPORT: sslPort,
+        usePinoHttp = true,
+        logLevel = 'info',
       } = serverConfig;
+
+      createLogger(logLevel);
+
+      const dbConfig = clone(serverConfig.db);
+
+      await this.initDb(dbConfig);
+      await dbSetup(db);
+
+      const app = serverController.expressApp;
+
+      const routeOptions = {};
+
+      if (usePinoHttp) {
+        const pinoMiddleware = await import('pino-http');
+
+        const pinoLogger = pinoMiddleware['default']({
+          logger,
+        });
+        routeOptions.pinoLogger = pinoLogger;
+      }
 
       serverController.setupExpress({
         ...expressOptions_,
@@ -51,7 +63,7 @@ const program = {
         jsonErrors,
       });
 
-      this.setupRoutes(app, routes);
+      this.setupRoutes(app, routes, routeOptions);
       serverController.startServer({
         port,
         sslPort,
@@ -59,7 +71,7 @@ const program = {
 
       this.server_ = serverController.expressServer;
     } catch (e) {
-      console.dir(e);
+      console.warn(util.inspect(e));
       throw new Error('Error: failed to initialise website');
     }
   },
@@ -67,7 +79,7 @@ const program = {
   async shutdown() {
     serverController.stopServer().then(() => {
       db.dispose();
-      console.log('server is stopping');
+      console.warn('server is stopping');
     });
   },
 
@@ -87,17 +99,18 @@ const program = {
         },
       );
     } catch (error) {
-      console.dir(error);
+      console.warn(util.inspect(error));
       db.dispose();
       throw Error('Error: cannot connect to database');
     }
   },
 
-  setupRoutes(app, routes) {
+  setupRoutes(app, routes, { pinoLogger }) {
     let maxAge = '5m';
+    pinoLogger && app.use(pinoLogger);
+
     if (app.get('env') === 'development') {
       maxAge = '0';
-      app.use(pino);
     }
 
     app.use(
@@ -124,13 +137,13 @@ const program = {
   },
 };
 process.on('SIGTERM', () => {
-  console.log('shutdown started');
+  console.warn('shutdown started');
 
   serverController
     .stopServer()
     .then(() => {
       db.dispose();
-      console.log('process is stopping');
+      console.warn('process is stopping');
 
       process.exit(0);
     })
@@ -138,16 +151,6 @@ process.on('SIGTERM', () => {
 });
 
 const pgm = Object.create(program);
-// make it all happen
-// const serverStartup = new Promise(resolve => {
-//   pgm
-//     .run()
-//     .then(() => resolve())
-//     .catch(e => {
-//       console.dir(e);
-//       console.error('Error: failed to start website');
-//     });
-// });
 
 export { pgm as program, serverController };
 

@@ -1,3 +1,4 @@
+import util from 'util';
 import { ValidationError } from './extendable-error.mjs';
 
 function checkError(res) {
@@ -6,7 +7,7 @@ function checkError(res) {
       return res.status(422).send({ message: e.message });
     }
 
-    console.dir(e);
+    console.warn(util.inspect(e));
     res.sendStatus(500);
   };
 }

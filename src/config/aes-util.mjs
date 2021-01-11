@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import util from 'util';
+
 const algorithm_ = 'aes-256-gcm';
 
 const aesUtil = {
@@ -32,7 +34,7 @@ const aesUtil = {
         decipher.final(encoding)
       );
     } catch (e) {
-      console.dir(e);
+      console.warn(util.inspect(e));
     }
 
     return null;

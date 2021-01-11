@@ -75,7 +75,7 @@ const ServerController = {
     const server = http.createServer(app).listen(port, () => {
       const serverPort = server.address().port;
 
-      console.log(`Express server listening on port ${serverPort}`);
+      console.warn(`Express server listening on port ${serverPort}`);
     });
 
     this.expressServer = server;
@@ -99,7 +99,7 @@ const ServerController = {
       const servers = https.createServer(options, app).listen(sslPort, () => {
         const serverPort = servers.address().port;
 
-        console.log(`Express https server listening on port ${serverPort}`);
+        console.warn(`Express https server listening on port ${serverPort}`);
       });
 
       this.expressServers = servers;

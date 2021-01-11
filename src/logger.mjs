@@ -1,3 +1,9 @@
 import pino from 'pino';
 
-export const logger = pino();
+let logger;
+
+export function createLogger(level) {
+  logger = pino({ level });
+}
+
+export { logger };

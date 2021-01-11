@@ -26,7 +26,6 @@ class JSONWebToken {
     const { kid } = decoded.header;
 
     const tokenData = await Database.getJSONWebTokenByKeyId(kid);
-    // console.dir(kid);
     if (!tokenData) {
       return false;
     }

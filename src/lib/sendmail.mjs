@@ -2,6 +2,7 @@ import serverConfig from 'config';
 import Email from 'email-templates';
 import nodemailer from 'nodemailer';
 import path from 'path';
+import util from 'util';
 import pickupTransport from './pickup-transport.mjs';
 
 let transporter;
@@ -19,7 +20,7 @@ async function send(options = {}) {
         dirname,
         typeof pickup === 'string' ? pickup : './pickup',
       );
-      // console.dir(directory);
+
       transport = pickupTransport({
         directory,
       });
@@ -84,7 +85,7 @@ async function send(options = {}) {
       locals: options.locals,
     });
   } catch (error) {
-    console.dir(error);
+    console.warn(util.inspect(error));
   }
 }
 

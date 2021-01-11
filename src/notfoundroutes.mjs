@@ -22,7 +22,7 @@ function notfound(serverController) {
       return sendResponse({ res, code, message, key });
     }
 
-    console.log('404');
+    console.warn('404');
     if (err.status !== undefined) {
       const { message, status: code } = err;
 

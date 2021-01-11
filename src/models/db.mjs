@@ -74,13 +74,13 @@ const db_ = {
         return client.db(database);
       })
       .then(db => {
-        console.log('Connected to database server.');
+        console.warn('Connected to database server.');
         db.on('reconnect', e => {
-          console.log(`reconnect: ${e && e.message}`);
+          console.warn(`reconnect: ${e && e.message}`);
         });
 
         db.on('error', e => {
-          console.log(`error: ${e && e.message}`);
+          console.warn(`error: ${e && e.message}`);
         });
         dbx = db;
         return db;
