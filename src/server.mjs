@@ -3,9 +3,11 @@ import methodOverride from 'method-override';
 import util from 'util';
 import { ServerConfig } from './config/server-config.mjs';
 import { db } from './index.mjs';
-import { createLogger, logger } from './logger.mjs';
+import { createLogger, initLogger, logger } from './logger.mjs';
 import notfound from './notfoundroutes.mjs';
 import serverController from './server-controller.mjs';
+import fs from 'fs';
+import pino from 'pino';
 
 const expressOptions_ = {
   engine: {
@@ -31,11 +33,23 @@ const program = {
         jsonErrors,
         PORT: port,
         SSLPORT: sslPort,
-        usePinoHttp = true,
+        logDestination,
         logLevel = 'info',
+        httpLogLevel = logLevel,
+        ProjectName,
       } = serverConfig;
 
-      createLogger(logLevel);
+      // create a logger for non-http middleware
+      initLogger({ level: logLevel });
+
+      // if have a log destination we create a separate logger so that web logs go there, but other logs/errors
+      // go to stdout (which in production goes to the journal typically)
+      const httpLogger = logDestination
+        ? (fs.writeFileSync(`/tmp/${ProjectName}.pid`, String(process.pid)),
+          // create an http logger that will write to a file (if specified)
+          // and which will support logRotate's HUP signal.
+          createLogger({ level: httpLogLevel }, logDestination))
+        : logger;
 
       const dbConfig = clone(serverConfig.db);
 
@@ -44,16 +58,10 @@ const program = {
 
       const app = serverController.expressApp;
 
-      const routeOptions = {};
-
-      if (usePinoHttp) {
-        const pinoMiddleware = await import('pino-http');
-
-        const pinoLogger = pinoMiddleware['default']({
-          logger,
-        });
-        routeOptions.pinoLogger = pinoLogger;
-      }
+      const pinoMiddleware = await import('pino-http');
+      const pinoLogger = pinoMiddleware['default']({
+        logger: httpLogger,
+      });
 
       serverController.setupExpress({
         ...expressOptions_,
@@ -63,7 +71,7 @@ const program = {
         jsonErrors,
       });
 
-      this.setupRoutes(app, routes, routeOptions);
+      this.setupRoutes(app, routes, { pinoLogger });
       serverController.startServer({
         port,
         sslPort,
@@ -71,7 +79,7 @@ const program = {
 
       this.server_ = serverController.expressServer;
     } catch (e) {
-      logger.warn(util.inspect(e));
+      console.warn(util.inspect(e));
       throw new Error('Error: failed to initialise website');
     }
   },
@@ -137,13 +145,14 @@ const program = {
   },
 };
 process.on('SIGTERM', () => {
-  logger.info('shutdown started');
+  const finalLogger = pino.final(logger);
+  finalLogger.info('shutdown started');
 
   serverController
     .stopServer()
     .then(() => {
       db.dispose();
-      logger.warn('process is stopping');
+      finalLogger.warn('process is stopping');
 
       process.exit(0);
     })
