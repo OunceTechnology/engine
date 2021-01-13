@@ -1,6 +1,6 @@
 {
   "name": "@ounce/engine",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Ounce engine",
   "main": "src/index.mjs",
   "module": "src/index.mjs",
@@ -17,6 +17,29 @@
     "url": "https://github.com/OunceTechnology/engine/issues"
   },
   "homepage": "https://github.com/OunceTechnology/engine#readme",
+  "dependencies": {
+    "app-root-path": "^3.0.0",
+    "asn1.js": "^5.4.1",
+    "bcrypt-nodejs": "0.0.3",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.3",
+    "cookies": "^0.8.0",
+    "config": "^3.3.3",
+    "email-templates": "^8.0.3",
+    "express": "^4.17.1",
+    "express-enforces-ssl": "^1.1.0",
+    "helmet": "^4.3.1",
+    "jsonwebtoken": "^8.5.0",
+    "method-override": "^3.0.0",
+    "mongodb": "^3.6.3",
+    "mongodb-client-encryption": "^1.1.0",
+    "nodemailer": "^6.4.17",
+    "pino": "^6.10.0",
+    "pino-http": "^5.3.0",
+    "serve-favicon": "^2.5.0",
+    "uuid": "^8.3.2"
+  },
   "devDependencies": {
     "@babel/core": "^7.12.9",
     "@babel/plugin-external-helpers": "^7.12.1",
