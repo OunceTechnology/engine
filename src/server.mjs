@@ -36,19 +36,22 @@ const program = {
         logDestination,
         logLevel = 'info',
         httpLogLevel = logLevel,
-        ProjectName,
+        pidFile,
       } = serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
 
+      if (pidFile) {
+        fs.writeFileSync(pidFile, String(process.pid));
+      }
+
       // if have a log destination we create a separate logger so that web logs go there, but other logs/errors
       // go to stdout (which in production goes to the journal typically)
       const httpLogger = logDestination
-        ? (fs.writeFileSync(`/tmp/${ProjectName}.pid`, String(process.pid)),
-          // create an http logger that will write to a file (if specified)
+        ? // create an http logger that will write to a file (if specified)
           // and which will support logRotate's HUP signal.
-          createLogger({ level: httpLogLevel }, logDestination))
+          createLogger({ level: httpLogLevel }, logDestination)
         : logger;
 
       const dbConfig = clone(serverConfig.db);
