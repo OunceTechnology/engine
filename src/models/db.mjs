@@ -2,8 +2,8 @@ import fs from 'fs';
 import mongodb from 'mongodb';
 import path from 'path';
 import util from 'util';
-import { KmsHandler } from './kms-handler.mjs';
 import { logger } from '../logger.mjs';
+import { KmsHandler } from './kms-handler.mjs';
 
 const MongoClient = mongodb.MongoClient;
 
@@ -40,7 +40,9 @@ const db_ = {
 
         const options = {
           ...{
-            w: 1,
+            // writeConcern: {
+            //   w: 1,
+            // },
             poolSize: 10,
             authMechanism: 'SCRAM-SHA-1',
             useNewUrlParser: true,
@@ -51,6 +53,10 @@ const db_ = {
 
         const mongoClient = new MongoClient(url, options);
         const client = await mongoClient.connect();
+
+        client.on('error', e => {
+          logger.warn(`error: ${e && e.message}`);
+        });
 
         _client = client;
 
@@ -76,13 +82,7 @@ const db_ = {
       })
       .then(db => {
         logger.info('Connected to database server.');
-        db.on('reconnect', e => {
-          logger.warn(`reconnect: ${e && e.message}`);
-        });
 
-        db.on('error', e => {
-          logger.warn(`error: ${e && e.message}`);
-        });
         dbx = db;
         return db;
       });
