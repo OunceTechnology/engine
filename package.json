@@ -1,6 +1,6 @@
 {
   "name": "@ounce/engine",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Ounce engine",
   "main": "src/index.mjs",
   "module": "src/index.mjs",

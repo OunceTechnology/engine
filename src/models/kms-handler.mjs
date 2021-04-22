@@ -78,9 +78,9 @@ class KmsHandler {
       });
 
       this.dataKeyId = dataKey;
+    } else {
+      this.dataKeyId = dataKey._id;
     }
-
-    this.dataKeyId = dataKey._id;
   }
 
   getClientEncryption() {
