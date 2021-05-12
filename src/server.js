@@ -1,13 +1,13 @@
 import bodyParser from 'body-parser';
-import methodOverride from 'method-override';
-import util from 'util';
-import { ServerConfig } from './config/server-config.mjs';
-import { db } from './index.mjs';
-import { createLogger, initLogger, logger } from './logger.mjs';
-import notfound from './notfoundroutes.mjs';
-import serverController from './server-controller.mjs';
 import fs from 'fs';
+import methodOverride from 'method-override';
 import pino from 'pino';
+import util from 'util';
+import { ServerConfig } from './config/server-config.js';
+import { db } from './index.js';
+import { createLogger, initLogger, logger } from './logger.js';
+import notfound from './notfoundroutes.js';
+import serverController from './server-controller.js';
 
 const expressOptions_ = {
   engine: {

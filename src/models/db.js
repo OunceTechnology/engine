@@ -2,8 +2,8 @@ import fs from 'fs';
 import mongodb from 'mongodb';
 import path from 'path';
 import util from 'util';
-import { logger } from '../logger.mjs';
-import { KmsHandler } from './kms-handler.mjs';
+import { logger } from '../logger.js';
+import { KmsHandler } from './kms-handler.js';
 
 const MongoClient = mongodb.MongoClient;
 

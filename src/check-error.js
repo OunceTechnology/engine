@@ -1,6 +1,6 @@
 import util from 'util';
-import { logger } from './logger.mjs';
-import { ValidationError } from './extendable-error.mjs';
+import { ValidationError } from './extendable-error.js';
+import { logger } from './logger.js';
 
 function checkError(res) {
   return function (e) {

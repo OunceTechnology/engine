@@ -1,6 +1,6 @@
-import JSONWebToken from './jsonwebtoken.mjs';
-import { databaseUsers as Users } from './models/database-users.mjs';
-import { logger } from './logger.mjs';
+import JSONWebToken from './jsonwebtoken.js';
+import { logger } from './logger.js';
+import { databaseUsers as Users } from './models/database-users.js';
 
 const AUTH_TYPE = 'Bearer';
 

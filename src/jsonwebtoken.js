@@ -1,8 +1,8 @@
 import assert from 'assert';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import ec from './ec-crypto.mjs';
-import Database from './models/database.mjs';
+import ec from './ec-crypto.js';
+import Database from './models/database.js';
 
 const issuer = 'ounce.ac';
 

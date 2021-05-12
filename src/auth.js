@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt-nodejs';
 import util from 'util';
-import { db } from './models/db.mjs';
+import { db } from './models/db.js';
 
 const bcryptCompareAsync = util.promisify(bcrypt.compare);
 const bcryptGenSaltAsync = util.promisify(bcrypt.genSalt);

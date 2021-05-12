@@ -1,4 +1,4 @@
-import { Entropy, Random } from './entropy-string/index.mjs';
+import { Entropy, Random } from './entropy-string/index.js';
 
 let _instance;
 

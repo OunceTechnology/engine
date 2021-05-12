@@ -1,5 +1,5 @@
-import { db } from './db.mjs';
-import UserHelper from './user-helper.mjs';
+import { db } from './db.js';
+import UserHelper from './user-helper.js';
 
 const databaseUsers = {
   async deleteUserById(id) {

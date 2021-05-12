@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import util from 'util';
-import { logger } from '../logger.mjs';
+import { logger } from '../logger.js';
 
 const algorithm_ = 'aes-256-gcm';
 

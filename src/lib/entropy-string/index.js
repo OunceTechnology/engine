@@ -5,9 +5,9 @@ import CharSet, {
   charSet4,
   charSet64,
   charSet8,
-} from './char-set.mjs';
-import Entropy from './entropy.mjs';
-import Random from './random.mjs';
+} from './char-set.js';
+import Entropy from './entropy.js';
+import Random from './random.js';
 
 export {
   Random,

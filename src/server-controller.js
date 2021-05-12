@@ -8,8 +8,8 @@ import http from 'http';
 import https from 'https';
 import path from 'path';
 import favicon from 'serve-favicon';
-import './express-async.mjs';
-import { logger } from './logger.mjs';
+import './express-async.js';
+import { logger } from './logger.js';
 
 const _defaultCspDirectives = {
   defaultSrc: [`'self'`],

@@ -1,6 +1,6 @@
-import { databaseTeams } from './database-teams.mjs';
-import { databaseTokens } from './database-tokens.mjs';
-import { databaseUsers, db } from './database-users.mjs';
+import { databaseTeams } from './database-teams.js';
+import { databaseTokens } from './database-tokens.js';
+import { databaseUsers, db } from './database-users.js';
 
 const Database = {
   ...databaseUsers,

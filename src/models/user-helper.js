@@ -1,4 +1,4 @@
-import { db } from './db.mjs';
+import { db } from './db.js';
 
 class UserHelper {
   static create() {

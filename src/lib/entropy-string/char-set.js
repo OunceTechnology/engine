@@ -1,4 +1,4 @@
-import lcm from './lcm.mjs';
+import lcm from './lcm.js';
 
 const propMap = new WeakMap();
 const BITS_PER_BYTE = 8;

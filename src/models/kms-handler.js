@@ -1,5 +1,5 @@
 import mce from 'mongodb-client-encryption';
-import { logger } from '../logger.mjs';
+import { logger } from '../logger.js';
 
 const ENC_DETERM = 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic';
 const ENC_RANDOM = 'AEAD_AES_256_CBC_HMAC_SHA_512-Random';

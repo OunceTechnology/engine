@@ -1,7 +1,7 @@
 import appRoot from 'app-root-path';
 import fsc from 'fs';
-import aesUtil from './aes-util.mjs';
-import CryptoConfig from './crypto-config.mjs';
+import aesUtil from './aes-util.js';
+import CryptoConfig from './crypto-config.js';
 
 const testBase64_ = /^[0-9a-zA-Z/+=]+[\s]?$/;
 const fs = fsc.promises;

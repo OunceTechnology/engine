@@ -3,8 +3,8 @@ import Email from 'email-templates';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import util from 'util';
-import { logger } from '../logger.mjs';
-import pickupTransport from './pickup-transport.mjs';
+import { logger } from '../logger.js';
+import pickupTransport from './pickup-transport.js';
 
 let transporter;
 

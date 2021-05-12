@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import CharSet, { charSet32 } from './char-set.mjs';
+import CharSet, { charSet32 } from './char-set.js';
 
 const propMap = new WeakMap();
 

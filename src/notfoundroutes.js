@@ -1,5 +1,5 @@
-import { ExtendableError } from './extendable-error.mjs';
-import { logger } from './logger.mjs';
+import { ExtendableError } from './extendable-error.js';
+import { logger } from './logger.js';
 
 function notfound(serverController) {
   const app = serverController.expressApp;
