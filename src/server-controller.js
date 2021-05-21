@@ -1,15 +1,9 @@
-import compression from 'compression';
-import Cookies from 'cookies';
-import express from 'express';
-import expressEnforcesSSL from 'express-enforces-ssl';
-import fs from 'fs';
-import helmet from 'helmet';
-import http from 'http';
-import https from 'https';
-import path from 'path';
-import favicon from 'serve-favicon';
-import './express-async.js';
-import { logger } from './logger.js';
+import Fastify from 'fastify';
+import fastifyFormbody from 'fastify-formbody';
+import fastifyHelmet from 'fastify-helmet';
+import fastifyMongodb from 'fastify-mongodb';
+import fastifySensible from 'fastify-sensible';
+import { engineDbPlugin, KmsHandler } from './models/index.js';
 
 const _defaultCspDirectives = {
   defaultSrc: [`'self'`],
@@ -30,28 +24,6 @@ const _defaultCspDirectives = {
 
 const ServerController = {
   setup() {
-    let expressServer = null;
-    const app = express();
-
-    Object.defineProperty(this, 'expressApp', {
-      get() {
-        return app;
-      },
-      enumerable: true,
-      configurable: true,
-    });
-
-    Object.defineProperty(this, 'expressServer', {
-      get() {
-        return expressServer;
-      },
-      set(newValue) {
-        expressServer = newValue;
-      },
-      enumerable: true,
-      configurable: true,
-    });
-
     return this;
   },
 
@@ -64,47 +36,19 @@ const ServerController = {
     // As a failsafe use port 0 if the input isn't defined
     // this will result in a random port being assigned
     // See : https://nodejs.org/api/http.html for details
-    if (
-      typeof port === 'undefined' ||
-      port === null ||
-      isNaN(parseInt(port, 10))
-    ) {
+    if (typeof port === 'undefined' || port === null || isNaN(parseInt(port, 10))) {
       port = 0;
     }
-    const app = this.expressApp;
 
-    const server = http.createServer(app).listen(port, () => {
-      const serverPort = server.address().port;
+    const fastify = this.fastify;
 
-      logger.info(`Express server listening on port ${serverPort}`);
-    });
-
-    this.expressServer = server;
-
-    sslPort = process.env.SSLPORT || sslPort;
-    if (sslPort) {
-      const options = {
-        key: fs.readFileSync('../localhost.key'),
-        cert: fs.readFileSync('../localhost.crt'),
-        requestCert: false,
-        rejectUnauthorized: false,
-      };
-
-      if (
-        typeof sslPort === 'undefined' ||
-        sslPort === null ||
-        isNaN(parseInt(sslPort, 10))
-      ) {
-        sslPort = 0;
+    fastify.listen(port, function (err, address) {
+      if (err) {
+        fastify.log.error(err);
+        process.exit(1);
       }
-      const servers = https.createServer(options, app).listen(sslPort, () => {
-        const serverPort = servers.address().port;
-
-        logger.info(`Express https server listening on port ${serverPort}`);
-      });
-
-      this.expressServers = servers;
-    }
+      fastify.log.warn(`server listening on ${address}`);
+    });
   },
   async close() {
     await this.expressServer.close();
@@ -113,85 +57,81 @@ const ServerController = {
     }
   },
 
-  setupExpress(options) {
-    const app = this.expressApp;
+  setupExpress({ csp, logLevel, dbConfig }) {
+    // eslint-disable-next-line new-cap
+    const fastify = Fastify({ trustProxy: true, logger: { level: logLevel } });
 
-    const { jsonErrors } = options;
-    if (jsonErrors) {
-      app.set('json errors', true);
-    }
+    fastify.register(fastifySensible);
 
-    // all environments;
-    app.disable('x-powered-by');
+    fastify.register(fastifyFormbody);
 
-    const viewpath = path.join(options.basepath || '', './srv/views');
+    const directives = csp || _defaultCspDirectives;
 
-    app.set('views', path.resolve(viewpath));
-    const cors = options.cors;
-    if (cors) {
-      const allowCrossDomain = function (req, res, next) {
-        res.header('Access-Control-Allow-Origin', cors);
-        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-        res.header(
-          'Access-Control-Allow-Headers',
-          'Content-Type,Authorization',
-        );
+    fastify.register(fastifyHelmet, {
+      dnsPrefetchControl: false,
+      expectCt: false,
+      contentSecurityPolicy: { optionsDefault: true, directives },
+    });
 
-        const method =
-          req.method && req.method.toUpperCase && req.method.toUpperCase();
+    const { url, database, csfle } = dbConfig;
 
-        if (method !== 'OPTIONS') {
-          next();
-        } else {
-          res.statusCode = 204;
-          res.end();
-        }
-      };
+    fastify.register(fastifyMongodb, { url, ...dbConfig.options }).register(async (fastify, options, next) => {
+      const client = fastify.mongo.client;
+      const db_ = client.db(database);
 
-      app.use(allowCrossDomain);
-    }
+      const db = new Proxy(db_, {
+        get: function (obj, prop) {
+          const dbProp = obj[prop] || db_[prop];
+          return dbProp ? dbProp : db_.collection(prop);
+        },
+      });
+      fastify.mongo.db = db;
 
-    if (app.get('env') !== 'development' && app.get('env') !== 'test') {
-      app.use(compression());
-    }
+      if (csfle) {
+        const key = typeof csfle.masterKey === 'string' ? Buffer.from(csfle.masterKey, 'base64') : csfle.masterKey;
 
-    if (process.env.NODE_ENV !== 'test') {
-      const favpath = options.favpath || './public/favicon.ico';
-      app.use(favicon(favpath));
-    }
+        const _kmsHandler = new KmsHandler({
+          kmsProviders: {
+            local: {
+              key,
+            },
+          },
+          client,
+          keyAltNames: csfle.keyAltNames,
+        });
 
-    app.use(Cookies.express());
+        await _kmsHandler.findOrCreateDataKey();
 
-    app.enable('trust proxy');
+        fastify.mongo.kmsHandler = _kmsHandler;
+      }
+      next();
+    });
 
-    if (app.get('env') !== 'development' && app.get('env') !== 'test') {
-      app.use(expressEnforcesSSL());
-    }
+    fastify.register(engineDbPlugin, {});
 
-    const oneeightyDaysInMilliseconds = 15552000000;
-    app.use(
-      helmet.hsts({
-        maxAge: oneeightyDaysInMilliseconds,
-        includeSubDomains: true,
-        force: true,
-      }),
-    );
+    this.fastify = fastify;
 
-    app.use(helmet.frameguard());
-    app.use(helmet.xssFilter());
-    app.use(helmet.noSniff());
+    return fastify;
 
-    const directives = options.csp || _defaultCspDirectives;
+    // const cors = options.cors;
+    // if (cors) {
+    //   const allowCrossDomain = function (req, res, next) {
+    //     res.header('Access-Control-Allow-Origin', cors);
+    //     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    //     res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
-    app.use(
-      helmet.contentSecurityPolicy({
-        directives,
-      }),
-    );
+    //     const method = req.method && req.method.toUpperCase && req.method.toUpperCase();
 
-    app.locals.cacheBreaker = 'br34k-01';
+    //     if (method !== 'OPTIONS') {
+    //       next();
+    //     } else {
+    //       res.statusCode = 204;
+    //       res.end();
+    //     }
+    //   };
 
-    app.set('json spaces', 2);
+    //   app.use(allowCrossDomain);
+    // }
   },
 };
 const instance = Object.create(ServerController).setup();

@@ -1,22 +1,10 @@
-import bodyParser from 'body-parser';
 import fs from 'fs';
-import methodOverride from 'method-override';
-import pino from 'pino';
 import util from 'util';
+import { routes } from '../routes.js';
 import { ServerConfig } from './config/server-config.js';
 import { db } from './index.js';
-import { createLogger, initLogger, logger } from './logger.js';
-import notfound from './notfoundroutes.js';
+import { initLogger, logger } from './logger.js';
 import serverController from './server-controller.js';
-
-const expressOptions_ = {
-  engine: {
-    name: 'handlebars',
-    options: {
-      defaultLayout: 'basev2',
-    },
-  },
-};
 
 const program = {
   get server() {
@@ -26,18 +14,7 @@ const program = {
     try {
       const serverConfig = await new ServerConfig().config();
 
-      const {
-        csp,
-        cors,
-        favpath,
-        jsonErrors,
-        PORT: port,
-        SSLPORT: sslPort,
-        logDestination,
-        logLevel = 'info',
-        httpLogLevel = logLevel,
-        pidFile,
-      } = serverConfig;
+      const { csp, cors, PORT: port, SSLPORT: sslPort, logLevel = 'info', pidFile } = serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -46,35 +23,19 @@ const program = {
         fs.writeFileSync(pidFile, String(process.pid));
       }
 
-      // if have a log destination we create a separate logger so that web logs go there, but other logs/errors
-      // go to stdout (which in production goes to the journal typically)
-      const httpLogger = logDestination
-        ? // create an http logger that will write to a file (if specified)
-          // and which will support logRotate's HUP signal.
-          createLogger({ level: httpLogLevel }, logDestination)
-        : logger;
-
       const dbConfig = clone(serverConfig.db);
 
       await this.initDb(dbConfig);
       await dbSetup(db);
 
-      const app = serverController.expressApp;
-
-      const pinoMiddleware = await import('pino-http');
-      const pinoLogger = pinoMiddleware['default']({
-        logger: httpLogger,
-      });
-
-      serverController.setupExpress({
-        ...expressOptions_,
+      const fastify = serverController.setupExpress({
         csp,
         cors,
-        favpath,
-        jsonErrors,
+        logLevel,
+        dbConfig,
       });
 
-      this.setupRoutes(app, routes, { pinoLogger });
+      await this.setupRoutes(fastify);
       serverController.startServer({
         port,
         sslPort,
@@ -116,55 +77,37 @@ const program = {
     }
   },
 
-  setupRoutes(app, routes, { pinoLogger }) {
-    let maxAge = '5m';
-    pinoLogger && app.use(pinoLogger);
+  async setupRoutes(fastify) {
+    await routes(fastify);
 
-    if (app.get('env') === 'development') {
-      maxAge = '0';
-    }
+    // let maxAge = '5m';
+    // pinoLogger && app.use(pinoLogger);
 
-    app.use(
-      bodyParser.urlencoded({
-        extended: true,
-      }),
-    );
+    // if (app.get('env') === 'development') {
+    //   maxAge = '0';
+    // }
 
-    app.use(
-      bodyParser.json({
-        limit: '50mb',
-      }),
-    );
+    // app.use(express.urlencoded());
 
-    app.use(methodOverride());
+    // app.use(
+    //   express.json({
+    //     limit: '50mb',
+    //   }),
+    // );
 
-    // uncomment to add support for csrf token;
-    // app.use(csurf());
+    // // uncomment to add support for csrf token;
+    // // app.use(csurf());
 
-    app.use('/', routes(maxAge));
+    // app.use('/', routes(maxAge));
 
     // respond to not found and errors as a last resort.
-    notfound(serverController);
+    // notfound(serverController);
   },
 };
-process.on('SIGTERM', () => {
-  const finalLogger = pino.final(logger);
-  finalLogger.info('shutdown started');
-
-  serverController
-    .stopServer()
-    .then(() => {
-      db.dispose();
-      finalLogger.warn('process is stopping');
-
-      process.exit(0);
-    })
-    .catch(() => process.exit(1));
-});
 
 const pgm = Object.create(program);
 
-export { pgm as program, serverController };
+export { pgm as program };
 
 // ===
 // Private functions

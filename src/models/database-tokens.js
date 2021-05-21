@@ -1,10 +1,12 @@
-import { db } from './db.js';
-
-export const databaseTokens = {
+export class Tokens {
+  constructor(db, ObjectId) {
+    this.db = db;
+    this.ObjectId = ObjectId;
+  }
   async createJSONWebToken(token) {
     const { keyId, user, publicKey, issuedAt, payload } = token;
 
-    const { insertedId } = await db.jsonwebtokens.insertOne({
+    const { insertedId } = await this.db.jsonwebtokens.insertOne({
       keyId,
       user,
       issuedAt,
@@ -13,25 +15,25 @@ export const databaseTokens = {
     });
 
     return insertedId;
-  },
+  }
 
   getJSONWebTokenByKeyId(keyId) {
-    return db.jsonwebtokens.findOne({ keyId });
-  },
+    return this.db.jsonwebtokens.findOne({ keyId });
+  }
 
-  getJSONWebTokensByUser: function (userId) {
-    return db.jsonwebtokens.find({ user: userId }).toArray();
-  },
+  getJSONWebTokensByUser(userId) {
+    return this.db.jsonwebtokens.find({ user: userId }).toArray();
+  }
 
-  deleteJSONWebTokenByKeyId: async function (keyId) {
-    const { result: deleteResult } = await db.jsonwebtokens.deleteOne({
+  async deleteJSONWebTokenByKeyId(keyId) {
+    const { result: deleteResult } = await this.db.jsonwebtokens.deleteOne({
       keyId,
     });
 
     return deleteResult.ok && deleteResult.n === 1;
-  },
+  }
 
   deleteJSONWebTokensForUser(userId) {
-    return db.jsonwebtokens.deleteMany({ user: userId });
-  },
-};
+    return this.db.jsonwebtokens.deleteMany({ user: userId });
+  }
+}

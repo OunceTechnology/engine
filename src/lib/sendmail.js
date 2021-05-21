@@ -11,16 +11,30 @@ let transporter;
 async function send(options = {}) {
   const dirname = process.cwd();
 
-  const { SMTP_PICKUP: pickup, sendMail } = serverConfig;
+  options.locals = {
+    ...options.locals,
+    ...{
+      tt(key, opts) {
+        return opts.data.root.t({ phrase: key, locale: opts.data.root.locale }, { ...options.locals, ...opts.hash });
+      },
+    },
+  };
+
+  if (!options.locals.locale) {
+    options.locals.locale = 'en';
+  }
+
+  const { SMTP_PICKUP: pickup, sendMail, ProductName } = serverConfig;
+
+  if (!options.locals.productName) {
+    options.locals.productName = ProductName ?? 'Not defined';
+  }
 
   if (!transporter) {
     let transport = {};
 
     if (pickup !== undefined && pickup) {
-      const directory = path.join(
-        dirname,
-        typeof pickup === 'string' ? pickup : './pickup',
-      );
+      const directory = path.join(dirname, typeof pickup === 'string' ? pickup : './pickup');
 
       transport = pickupTransport({
         directory,
@@ -46,6 +60,14 @@ async function send(options = {}) {
   };
 
   const emailConfig = {
+    i18n: {
+      defaultLocale: 'en',
+      locales: sendMail.locales,
+      fallbacks: sendMail.fallbacks,
+      syncFiles: false,
+      updateFiles: false,
+      objectNotation: true,
+    },
     views: {
       root: templateDir,
       options: {
