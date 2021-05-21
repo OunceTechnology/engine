@@ -1,6 +1,5 @@
 import fs from 'fs';
 import util from 'util';
-import { routes } from '../routes.js';
 import { ServerConfig } from './config/server-config.js';
 import { db } from './index.js';
 import { initLogger, logger } from './logger.js';
@@ -14,7 +13,14 @@ const program = {
     try {
       const serverConfig = await new ServerConfig().config();
 
-      const { csp, cors, PORT: port, SSLPORT: sslPort, logLevel = 'info', pidFile } = serverConfig;
+      const {
+        csp,
+        cors,
+        PORT: port,
+        SSLPORT: sslPort,
+        logLevel = 'info',
+        pidFile,
+      } = serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -35,7 +41,7 @@ const program = {
         dbConfig,
       });
 
-      await this.setupRoutes(fastify);
+      await this.setupRoutes(fastify, routes);
       serverController.startServer({
         port,
         sslPort,
@@ -77,7 +83,7 @@ const program = {
     }
   },
 
-  async setupRoutes(fastify) {
+  async setupRoutes(fastify, routes) {
     await routes(fastify);
 
     // let maxAge = '5m';
