@@ -78,6 +78,20 @@ class KmsHandler {
       });
 
       this.dataKeyId = dataKey;
+
+      try {
+        await this.client
+          .db(this.keyDB)
+          .collection(this.keyColl)
+          .findOneAndUpdate(
+            { _id: dataKey },
+            { $set: { keyAltNames: [this.keyAltNames] } },
+          );
+      } catch (error) {
+        console.log(
+          `failed to add keyaltname ${this.keyAltNames}, ${error.stack}`,
+        );
+      }
     } else {
       this.dataKeyId = dataKey._id;
     }
