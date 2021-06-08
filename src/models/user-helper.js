@@ -1,40 +1,24 @@
-import { db } from './db.js';
-
 class UserHelper {
-  static create() {
-    const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+  static create(kmsHandler) {
+    const encryptDecrypt = kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
     return userHelper;
   }
 
-  constructor({ decrypt = val => val, encrypt = async val => val }) {
+  constructor({ decrypt = value => value, encrypt = async value => value }) {
     this.decryptFn = decrypt;
     this.encryptFn = encrypt;
   }
 
   async encrypt(value) {
-    return value === void 0
-      ? value
-      : value.subType === 6
-      ? value
-      : this.encryptFn(value);
+    return value === void 0 ? value : (value.subType === 6 ? value : this.encryptFn(value));
   }
 
   async decrypt(value) {
-    return value === void 0
-      ? value
-      : value.sub_type === 6
-      ? this.decryptFn(value)
-      : value;
+    return value === void 0 ? value : (value.sub_type === 6 ? this.decryptFn(value) : value);
   }
 
-  async encryptedUser({
-    username,
-    name: { first = '', last = '' } = {},
-    email,
-    lowerEmail,
-    ...user
-  }) {
+  async encryptedUser({ username, name: { first = '', last = '' } = {}, email, lowerEmail, ...user }) {
     const encoded = {
       ...user,
       username: await this.encrypt(username),
@@ -55,14 +39,7 @@ class UserHelper {
     return encoded;
   }
 
-  async user({
-    _id,
-    username,
-    name: { first = '', last = '' } = {},
-    email = '',
-    lowerEmail,
-    ...user
-  }) {
+  async user({ _id, username, name: { first = '', last = '' } = {}, email = '', lowerEmail, ...user }) {
     const decoded = {
       _id: _id?.toString(),
       ...user,

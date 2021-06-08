@@ -1,6 +1,6 @@
 export class Teams {
-  constructor(db, ObjectId) {
-    this.db = db;
+  constructor(database, ObjectId) {
+    this.db = database;
     this.ObjectId = ObjectId;
   }
   async createTeam({ _id, ...team }) {

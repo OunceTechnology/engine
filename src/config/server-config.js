@@ -1,21 +1,21 @@
 import appRoot from 'app-root-path';
-import fsc from 'fs';
+import fsc from 'node:fs';
 import aesUtil from './aes-util.js';
 import CryptoConfig from './crypto-config.js';
 
-const testBase64_ = /^[0-9a-zA-Z/+=]+[\s]?$/;
+const testBase64_ = /^[\d+/=A-Za-z]+\s?$/;
 const fs = fsc.promises;
 
-const loadKeyFromEnv = () => {
-  const keyStr = process.env.API_KEY;
-  if (!keyStr) {
+const loadKeyFromEnvironment = () => {
+  const keyString = process.env.API_KEY;
+  if (!keyString) {
     return void 0;
   }
-  if (!testBase64_.test(keyStr)) {
-    throw new Error(`Invalid format: API_KEY = ${keyStr}`);
+  if (!testBase64_.test(keyString)) {
+    throw new Error(`Invalid format: API_KEY = ${keyString}`);
   }
 
-  const key = Buffer.from(keyStr, 'base64');
+  const key = Buffer.from(keyString, 'base64');
 
   if (key.length !== 32) {
     throw new Error('Wrong key size');
@@ -30,8 +30,8 @@ export class ServerConfig {
   }
 
   async config() {
-    this.apiKey = await (loadKeyFromEnv() ?? this.loadKeyFromFile());
-    return new CryptoConfig(val => aesUtil.decrypt(val, this.apiKey)).config;
+    this.apiKey = await (loadKeyFromEnvironment() ?? this.loadKeyFromFile());
+    return new CryptoConfig(value => aesUtil.decrypt(value, this.apiKey)).config;
   }
 
   async loadKeyFromFile() {

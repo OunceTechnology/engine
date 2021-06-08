@@ -1,8 +1,9 @@
+/* eslint-disable unicorn/no-array-callback-reference */
 import UserHelper from './user-helper.js';
 
 export class Users {
-  constructor(db, ObjectId, kmsHandler) {
-    this.db = db;
+  constructor(database, ObjectId, kmsHandler) {
+    this.db = database;
     this.ObjectId = ObjectId;
     this.kmsHandler = kmsHandler;
   }
@@ -79,9 +80,14 @@ export class Users {
     );
 
     if (encryptedUser) {
-      const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
-      const userHelper = new UserHelper(encryptDecrypt);
-      return await userHelper.user(encryptedUser);
+      try {
+        const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
+        const userHelper = new UserHelper(encryptDecrypt);
+        return await userHelper.user(encryptedUser);
+      } catch (error) {
+        console.dir(error.toString());
+        return encryptedUser;
+      }
     }
   }
 
@@ -103,7 +109,7 @@ export class Users {
   }
 
   async getUserByIds(ids) {
-    const dbUsers = await this.db.users
+    const databaseUsers = await this.db.users
       .find(
         {
           _id: { $in: ids.map(id => new this.ObjectId(id)) },
@@ -117,21 +123,30 @@ export class Users {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const users = await Promise.all(dbUsers.map(async dbUser => await userHelper.user(dbUser)));
+    const users = await Promise.all(
+      databaseUsers.map(async databaseUser => {
+        try {
+          return await userHelper.user(databaseUser);
+        } catch (error) {
+          console.dir(error.toString());
+          return databaseUser;
+        }
+      }),
+    );
 
     return users;
   }
 
-  async findUsers(query, projection = { name: 1, email: 1, username: 1, role: 1 }) {
-    const dbUsers = await this.db.users
+  async findUsers(query, projection) {
+    const databaseUsers = await this.db.users
       .find(query, {
-        projection,
+        projection: projection ?? { name: 1, email: 1, username: 1, role: 1 },
       })
       .toArray();
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const users = await Promise.all(dbUsers.map(async dbUser => await userHelper.user(dbUser)));
+    const users = await Promise.all(databaseUsers.map(async databaseUser => await userHelper.user(databaseUser)));
 
     return users;
   }
@@ -147,7 +162,7 @@ export class Users {
       query['teams.id'] = { $in: teamIds };
     }
 
-    const dbUsers = await this.db.users
+    const databaseUsers = await this.db.users
       .find(query, {
         projection: { password: 0 },
       })
@@ -156,7 +171,16 @@ export class Users {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const users = await Promise.all(dbUsers.map(async dbUser => await userHelper.user(dbUser)));
+    const users = await Promise.all(
+      databaseUsers.map(async databaseUser => {
+        try {
+          return await userHelper.user(databaseUser);
+        } catch (error) {
+          console.dir(error.toString());
+          return databaseUser;
+        }
+      }),
+    );
 
     return users;
   }
@@ -173,9 +197,9 @@ export class Users {
       ],
     };
 
-    const dbUser = await this.db.users.findOne(query);
-    if (dbUser) {
-      const user = await userHelper.user(dbUser);
+    const databaseUser = await this.db.users.findOne(query);
+    if (databaseUser) {
+      const user = await userHelper.user(databaseUser);
 
       if (!user.teams) {
         user.teams = [];
@@ -186,18 +210,18 @@ export class Users {
   }
 
   async getUserByToken(token, date = new Date()) {
-    const dbUser = await this.db.users.findOne({
+    const databaseUser = await this.db.users.findOne({
       'resetToken.token': token,
       'resetToken.validUntil': {
         $gt: date,
       },
     });
 
-    if (dbUser) {
+    if (databaseUser) {
       const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
       const userHelper = new UserHelper(encryptDecrypt);
 
-      return await userHelper.user(dbUser);
+      return await userHelper.user(databaseUser);
     }
   }
 
@@ -208,7 +232,7 @@ export class Users {
     const field = await userHelper.encrypt(subject.toLowerCase());
 
     const query = {};
-    if (subject.indexOf('@') === -1) {
+    if (!subject.includes('@')) {
       query.username = field;
     } else {
       query.lowerEmail = field;

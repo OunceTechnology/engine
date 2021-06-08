@@ -3,7 +3,7 @@ import fastifyFormbody from 'fastify-formbody';
 import fastifyHelmet from 'fastify-helmet';
 import fastifyMongodb from 'fastify-mongodb';
 import fastifySensible from 'fastify-sensible';
-import { engineDbPlugin, KmsHandler } from './models/index.js';
+import { engineDatabasePlugin, KmsHandler } from './models/index.js';
 
 const _defaultCspDirectives = {
   defaultSrc: [`'self'`],
@@ -31,20 +31,21 @@ const ServerController = {
     return Promise.resolve(this.expressServer.close());
   },
 
-  startServer({ port, sslPort }) {
+  startServer({ port, sslPort, listenOn }) {
     port = process.env.PORT || port;
     // As a failsafe use port 0 if the input isn't defined
     // this will result in a random port being assigned
     // See : https://nodejs.org/api/http.html for details
-    if (typeof port === 'undefined' || port === null || isNaN(parseInt(port, 10))) {
+    if (typeof port === 'undefined' || port === null || Number.isNaN(Number.parseInt(port, 10))) {
       port = 0;
     }
 
     const fastify = this.fastify;
 
-    fastify.listen(port, function (err, address) {
-      if (err) {
-        fastify.log.error(err);
+    fastify.listen(port, listenOn, function (error, address) {
+      if (error) {
+        fastify.log.error(error);
+        // eslint-disable-next-line unicorn/no-process-exit
         process.exit(1);
       }
       fastify.log.warn(`server listening on ${address}`);
@@ -57,7 +58,7 @@ const ServerController = {
     }
   },
 
-  setupExpress({ csp, logLevel, dbConfig }) {
+  setupExpress({ csp, logLevel, dbConfig, dbSetup }) {
     // eslint-disable-next-line new-cap
     const fastify = Fastify({ trustProxy: true, logger: { level: logLevel } });
 
@@ -73,19 +74,19 @@ const ServerController = {
       contentSecurityPolicy: { optionsDefault: true, directives },
     });
 
-    const { url, database, csfle } = dbConfig;
+    const { url, database, csfle, options } = dbConfig;
 
-    fastify.register(fastifyMongodb, { url, ...dbConfig.options }).register(async (fastify, options, next) => {
+    fastify.register(fastifyMongodb, { url, ...options }).register(async (fastify, options, next) => {
       const client = fastify.mongo.client;
-      const db_ = client.db(database);
+      const database_ = client.db(database);
 
-      const db = new Proxy(db_, {
-        get: function (obj, prop) {
-          const dbProp = obj[prop] || db_[prop];
-          return dbProp ? dbProp : db_.collection(prop);
+      const database__ = new Proxy(database_, {
+        get: function (object, property) {
+          const databaseProperty = object[property] || database_[property];
+          return databaseProperty ? databaseProperty : database_.collection(property);
         },
       });
-      fastify.mongo.db = db;
+      fastify.mongo.db = database__;
 
       if (csfle) {
         const key = typeof csfle.masterKey === 'string' ? Buffer.from(csfle.masterKey, 'base64') : csfle.masterKey;
@@ -107,7 +108,10 @@ const ServerController = {
       next();
     });
 
-    fastify.register(engineDbPlugin, {});
+    fastify.register(engineDatabasePlugin, {}).register(async (instance, options, next) => {
+      await dbSetup(instance);
+      next();
+    });
 
     this.fastify = fastify;
 

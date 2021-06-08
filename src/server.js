@@ -1,7 +1,7 @@
-import fs from 'fs';
-import util from 'util';
+import fs from 'node:fs';
+import util from 'node:util';
 import { ServerConfig } from './config/server-config.js';
-import { db } from './index.js';
+import { database } from './index.js';
 import { initLogger, logger } from './logger.js';
 import serverController from './server-controller.js';
 
@@ -9,18 +9,11 @@ const program = {
   get server() {
     return this.server_;
   },
-  async run(dbSetup, routes) {
+  async run(databaseSetup, routes) {
     try {
       const serverConfig = await new ServerConfig().config();
 
-      const {
-        csp,
-        cors,
-        PORT: port,
-        SSLPORT: sslPort,
-        logLevel = 'info',
-        pidFile,
-      } = serverConfig;
+      const { csp, cors, PORT: port, SSLPORT: sslPort, logLevel = 'info', pidFile, listenOn, db } = serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -29,59 +22,61 @@ const program = {
         fs.writeFileSync(pidFile, String(process.pid));
       }
 
-      const dbConfig = clone(serverConfig.db);
-
-      await this.initDb(dbConfig);
-      await dbSetup(db);
+      const databaseConfig = clone(db);
 
       const fastify = serverController.setupExpress({
         csp,
         cors,
         logLevel,
-        dbConfig,
+        dbConfig: databaseConfig,
+        dbSetup: databaseSetup,
       });
+
+      // // await this.initDb(dbConfig, fastify);
+      // await dbSetup(fastify);
 
       await this.setupRoutes(fastify, routes);
       serverController.startServer({
         port,
         sslPort,
+        listenOn,
       });
 
       this.server_ = serverController.expressServer;
-    } catch (e) {
-      console.warn(util.inspect(e));
+    } catch (error) {
+      console.warn(util.inspect(error));
       throw new Error('Error: failed to initialise website');
     }
   },
 
   async shutdown() {
     serverController.stopServer().then(() => {
-      db.dispose();
+      database.dispose();
       logger.info('server is stopping');
     });
   },
 
-  async initDb(dbConfig) {
-    if (!dbConfig) {
-      throw Error('Error: no database info found');
-    }
-    const dbg = dbConfig;
-    try {
-      await db.init(dbg, {});
-      await db.jsonwebtokens.createIndex(
-        {
-          keyId: 1,
-        },
-        {
-          unique: true,
-        },
-      );
-    } catch (error) {
-      logger.warn(util.inspect(error));
-      db.dispose();
-      throw Error('Error: cannot connect to database');
-    }
-  },
+  // async initDb(dbConfig, fastify) {
+  //   if (!dbConfig) {
+  //     throw Error('Error: no database info found');
+  //   }
+  //   const dbg = dbConfig;
+  //   try {
+  //     await db.init(dbg, {});
+  //     await db.jsonwebtokens.createIndex(
+  //       {
+  //         keyId: 1,
+  //       },
+  //       {
+  //         unique: true,
+  //       },
+  //     );
+  //   } catch (error) {
+  //     logger.warn(util.inspect(error));
+  //     db.dispose();
+  //     throw Error('Error: cannot connect to database');
+  //   }
+  // },
 
   async setupRoutes(fastify, routes) {
     await routes(fastify);
@@ -121,9 +116,11 @@ export { pgm as program };
 
 function clone(o) {
   return typeof o === 'object' && o !== null // only clone objects
-    ? Array.isArray(o) // if cloning an array
-      ? o.map(e => clone(e)) // clone each of its elements
-      : Object.keys(o).reduce(
+    ? // eslint-disable-next-line unicorn/no-nested-ternary
+      Array.isArray(o) // if cloning an array
+      ? o.map(element => clone(element)) // clone each of its elements
+      : // eslint-disable-next-line unicorn/no-array-reduce
+        Object.keys(o).reduce(
           // otherwise reduce every key in the object
           (r, k) => ((r[k] = clone(o[k])), r),
           {}, // and save its cloned value into a new object

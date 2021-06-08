@@ -1,31 +1,24 @@
 import auth from './auth.js';
-// import { ConflictError, NotAcceptableError, NotFoundError, ValidationError } from './extendable-error.js';
 import RandomString from './lib/random-string.js';
 import sendmail from './lib/sendmail.js';
 import { logger } from './logger.js';
 import { Tokens } from './models/database-tokens.js';
 import { UserHelper } from './models/database-users.js';
-import { db } from './models/db.js';
+import { database } from './models/database.js';
 import userUtils from './models/user-utils.js';
 import Passwords from './passwords.js';
 import { program } from './server.js';
 
-const toObjectId = db.toObjectId;
+const toObjectId = database.toObjectId;
 export {
   program,
   logger,
   RandomString,
-  db,
+  database,
   userUtils,
-  // databaseUsers as Users,
-  // Teams,
   Tokens,
   UserHelper,
   Passwords,
-  // ConflictError,
-  // NotAcceptableError,
-  // NotFoundError,
-  // ValidationError,
   sendmail,
   auth,
   toObjectId,

@@ -1,7 +1,7 @@
-import crypto from 'crypto';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 // expose to the world
 export default function (options) {
@@ -21,19 +21,17 @@ class PickupTransport {
     mail.message.keepBcc = true;
     let callbackSent = false;
     const filename =
-      ((mail.message.getHeader('message-id') || '').replace(
-        /[^a-z0-9\-_.@]/g,
-        '',
-      ) || crypto.randomBytes(10).toString('hex')) + '.eml'; // eslint-disable-line prefer-template
+      ((mail.message.getHeader('message-id') || '').replace(/[^\d.@_a-z\-]/g, '') ||
+        crypto.randomBytes(10).toString('hex')) + '.eml'; // eslint-disable-line prefer-template
     const target = path.join(this.options.directory, filename);
     const output = fs.createWriteStream(target);
     const input = mail.message.createReadStream();
-    const _onError = function (err) {
+    const _onError = function (error) {
       if (callbackSent) {
         return;
       }
       callbackSent = true;
-      callback(err);
+      callback(error);
     };
     input.on('error', _onError);
     input.on('end', function () {
@@ -41,7 +39,7 @@ class PickupTransport {
         return;
       }
       callbackSent = true;
-      callback(null, {
+      callback(undefined, {
         envelope: mail.data.envelope || mail.message.getEnvelope(),
         messageId: mail.message.getHeader('message-id'),
         path: target,

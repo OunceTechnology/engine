@@ -1,6 +1,6 @@
 export class Tokens {
-  constructor(db, ObjectId) {
-    this.db = db;
+  constructor(database, ObjectId) {
+    this.db = database;
     this.ObjectId = ObjectId;
   }
   async createJSONWebToken(token) {

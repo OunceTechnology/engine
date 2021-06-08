@@ -83,14 +83,9 @@ class KmsHandler {
         await this.client
           .db(this.keyDB)
           .collection(this.keyColl)
-          .findOneAndUpdate(
-            { _id: dataKey },
-            { $set: { keyAltNames: [this.keyAltNames] } },
-          );
+          .findOneAndUpdate({ _id: dataKey }, { $set: { keyAltNames: [this.keyAltNames] } });
       } catch (error) {
-        console.log(
-          `failed to add keyaltname ${this.keyAltNames}, ${error.stack}`,
-        );
+        console.log(`failed to add keyaltname ${this.keyAltNames}, ${error.stack}`);
       }
     } else {
       this.dataKeyId = dataKey._id;
@@ -120,12 +115,7 @@ class KmsHandler {
     return val => clientEncryption.decrypt(val);
   }
 
-  async encrypt(
-    clientEncryption,
-    value,
-    keyId = this.dataKeyId,
-    algorithm = ENC_DETERM,
-  ) {
+  async encrypt(clientEncryption, value, keyId = this.dataKeyId, algorithm = ENC_DETERM) {
     return clientEncryption.encrypt(value, { keyId, algorithm });
   }
 

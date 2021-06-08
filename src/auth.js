@@ -1,32 +1,16 @@
 import bcrypt from 'bcryptjs';
-import util from 'util';
-import { db } from './models/db.js';
+import { database } from './models/database.js';
 
-const bcryptCompareAsync = util.promisify(bcrypt.compare);
-const bcryptGenSaltAsync = util.promisify(bcrypt.genSalt);
-const bcryptHashAsync = util.promisify(bcrypt.hash);
-
-async function encryptPassword(password) {
-  const SALT_WORK_FACTOR = 10;
-
-  // generate a salt and return hash
-  const salt = await bcryptGenSaltAsync(SALT_WORK_FACTOR);
-
-  return bcryptHashAsync(password, salt, null);
-}
+const SALT_WORK_FACTOR_ = 10;
 
 async function authenticate(email, password) {
-  const isEmail = typeof email === 'string' && email.indexOf('@') > -1;
+  const isEmail = typeof email === 'string' && email.includes('@');
   // normalize username
   const conditions = isEmail
     ? {
-        $or: [
-          { username: email },
-          { email },
-          { lowerEmail: email.toLowerCase() },
-        ],
+        $or: [{ username: email }, { email }, { lowerEmail: email.toLowerCase() }],
       }
-    : { _id: db.toObjectId(email) };
+    : { _id: database.toObjectId(email) };
 
   const [user, hash] = await findUser(conditions);
 
@@ -34,7 +18,7 @@ async function authenticate(email, password) {
     return false;
   }
 
-  const isMatch = await bcryptCompareAsync(password, hash);
+  const isMatch = await bcrypt.compare(password, hash);
 
   return isMatch ? user : false;
 }
@@ -46,10 +30,10 @@ async function findUser(query) {
   };
 
   if (conditions._id && typeof conditions._id === 'string') {
-    conditions._id = db.toObjectId(conditions._id);
+    conditions._id = database.toObjectId(conditions._id);
   }
 
-  const user = await db.users.findOne(conditions, {
+  const user = await database.users.findOne(conditions, {
     projection: {
       _id: 1,
       username: 1,
@@ -81,6 +65,5 @@ async function findUser(query) {
 
 export default {
   authenticate,
-  encryptPassword,
   findUser,
 };

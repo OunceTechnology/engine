@@ -1,21 +1,26 @@
+import appRoot from 'app-root-path';
 import serverConfig from 'config';
 import Email from 'email-templates';
+import path, { join } from 'node:path';
+import util from 'node:util';
 import nodemailer from 'nodemailer';
-import path from 'path';
-import util from 'util';
 import { logger } from '../logger.js';
 import pickupTransport from './pickup-transport.js';
 
 let transporter;
 
 async function send(options = {}) {
-  const dirname = process.cwd();
+  const dirname = join(appRoot.path, 'pickup');
+  console.dir(dirname);
 
   options.locals = {
     ...options.locals,
     ...{
-      tt(key, opts) {
-        return opts.data.root.t({ phrase: key, locale: opts.data.root.locale }, { ...options.locals, ...opts.hash });
+      tt(key, options_) {
+        return options_.data.root.t(
+          { phrase: key, locale: options_.data.root.locale },
+          { ...options.locals, ...options_.hash },
+        );
       },
     },
   };
@@ -48,7 +53,7 @@ async function send(options = {}) {
   const templateFolder = sendMail?.templateDir || './templates';
   const juice = options.juice ?? sendMail?.juice ?? false;
 
-  const templateDir = path.resolve(templateFolder);
+  const templateDirectory = path.resolve(templateFolder);
 
   const mailoptions = {
     from: options.from,
@@ -62,14 +67,14 @@ async function send(options = {}) {
   const emailConfig = {
     i18n: {
       defaultLocale: 'en',
-      locales: sendMail.locales,
-      fallbacks: sendMail.fallbacks,
+      locales: sendMail.locales ?? ['en'],
+      fallbacks: sendMail.fallbacks ?? {},
       syncFiles: false,
       updateFiles: false,
       objectNotation: true,
     },
     views: {
-      root: templateDir,
+      root: templateDirectory,
       options: {
         extension: 'hbs',
         map: { hbs: 'handlebars' },
@@ -88,7 +93,7 @@ async function send(options = {}) {
         // `<link rel="stylesheet" style="style.css" data-inline" />`
         // then this assumes that the file `build/style.css` exists
         //
-        relativeTo: templateDir,
+        relativeTo: templateDirectory,
         //
         // but you might want to change it to something like:
         // relativeTo: path.join(__dirname, '..', 'assets')
