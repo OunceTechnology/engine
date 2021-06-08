@@ -1,43 +1,19 @@
-import bodyParser from 'body-parser';
-import fs from 'fs';
-import methodOverride from 'method-override';
-import pino from 'pino';
-import util from 'util';
+import fs from 'node:fs';
+import util from 'node:util';
 import { ServerConfig } from './config/server-config.js';
-import { db } from './index.js';
-import { createLogger, initLogger, logger } from './logger.js';
-import notfound from './notfoundroutes.js';
+import { database } from './index.js';
+import { initLogger, logger } from './logger.js';
 import serverController from './server-controller.js';
-
-const expressOptions_ = {
-  engine: {
-    name: 'handlebars',
-    options: {
-      defaultLayout: 'basev2',
-    },
-  },
-};
 
 const program = {
   get server() {
     return this.server_;
   },
-  async run(dbSetup, routes) {
+  async run(databaseSetup, routes) {
     try {
       const serverConfig = await new ServerConfig().config();
 
-      const {
-        csp,
-        cors,
-        favpath,
-        jsonErrors,
-        PORT: port,
-        SSLPORT: sslPort,
-        logDestination,
-        logLevel = 'info',
-        httpLogLevel = logLevel,
-        pidFile,
-      } = serverConfig;
+      const { csp, cors, PORT: port, SSLPORT: sslPort, logLevel = 'info', pidFile, listenOn, db } = serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -46,125 +22,93 @@ const program = {
         fs.writeFileSync(pidFile, String(process.pid));
       }
 
-      // if have a log destination we create a separate logger so that web logs go there, but other logs/errors
-      // go to stdout (which in production goes to the journal typically)
-      const httpLogger = logDestination
-        ? // create an http logger that will write to a file (if specified)
-          // and which will support logRotate's HUP signal.
-          createLogger({ level: httpLogLevel }, logDestination)
-        : logger;
+      const databaseConfig = clone(db);
 
-      const dbConfig = clone(serverConfig.db);
-
-      await this.initDb(dbConfig);
-      await dbSetup(db);
-
-      const app = serverController.expressApp;
-
-      const pinoMiddleware = await import('pino-http');
-      const pinoLogger = pinoMiddleware['default']({
-        logger: httpLogger,
-      });
-
-      serverController.setupExpress({
-        ...expressOptions_,
+      const fastify = serverController.setupExpress({
         csp,
         cors,
-        favpath,
-        jsonErrors,
+        logLevel,
+        dbConfig: databaseConfig,
+        dbSetup: databaseSetup,
       });
 
-      this.setupRoutes(app, routes, { pinoLogger });
+      // // await this.initDb(dbConfig, fastify);
+      // await dbSetup(fastify);
+
+      await this.setupRoutes(fastify, routes);
       serverController.startServer({
         port,
         sslPort,
+        listenOn,
       });
 
       this.server_ = serverController.expressServer;
-    } catch (e) {
-      console.warn(util.inspect(e));
+    } catch (error) {
+      console.warn(util.inspect(error));
       throw new Error('Error: failed to initialise website');
     }
   },
 
   async shutdown() {
     serverController.stopServer().then(() => {
-      db.dispose();
+      database.dispose();
       logger.info('server is stopping');
     });
   },
 
-  async initDb(dbConfig) {
-    if (!dbConfig) {
-      throw Error('Error: no database info found');
-    }
-    const dbg = dbConfig;
-    try {
-      await db.init(dbg, {});
-      await db.jsonwebtokens.createIndex(
-        {
-          keyId: 1,
-        },
-        {
-          unique: true,
-        },
-      );
-    } catch (error) {
-      logger.warn(util.inspect(error));
-      db.dispose();
-      throw Error('Error: cannot connect to database');
-    }
-  },
+  // async initDb(dbConfig, fastify) {
+  //   if (!dbConfig) {
+  //     throw Error('Error: no database info found');
+  //   }
+  //   const dbg = dbConfig;
+  //   try {
+  //     await db.init(dbg, {});
+  //     await db.jsonwebtokens.createIndex(
+  //       {
+  //         keyId: 1,
+  //       },
+  //       {
+  //         unique: true,
+  //       },
+  //     );
+  //   } catch (error) {
+  //     logger.warn(util.inspect(error));
+  //     db.dispose();
+  //     throw Error('Error: cannot connect to database');
+  //   }
+  // },
 
-  setupRoutes(app, routes, { pinoLogger }) {
-    let maxAge = '5m';
-    pinoLogger && app.use(pinoLogger);
+  async setupRoutes(fastify, routes) {
+    await routes(fastify);
 
-    if (app.get('env') === 'development') {
-      maxAge = '0';
-    }
+    // let maxAge = '5m';
+    // pinoLogger && app.use(pinoLogger);
 
-    app.use(
-      bodyParser.urlencoded({
-        extended: true,
-      }),
-    );
+    // if (app.get('env') === 'development') {
+    //   maxAge = '0';
+    // }
 
-    app.use(
-      bodyParser.json({
-        limit: '50mb',
-      }),
-    );
+    // app.use(express.urlencoded());
 
-    app.use(methodOverride());
+    // app.use(
+    //   express.json({
+    //     limit: '50mb',
+    //   }),
+    // );
 
-    // uncomment to add support for csrf token;
-    // app.use(csurf());
+    // // uncomment to add support for csrf token;
+    // // app.use(csurf());
 
-    app.use('/', routes(maxAge));
+    // app.use('/', routes(maxAge));
 
     // respond to not found and errors as a last resort.
-    notfound(serverController);
+    // notfound(serverController);
   },
 };
-process.on('SIGTERM', () => {
-  const finalLogger = pino.final(logger);
-  finalLogger.info('shutdown started');
-
-  serverController
-    .stopServer()
-    .then(() => {
-      db.dispose();
-      finalLogger.warn('process is stopping');
-
-      process.exit(0);
-    })
-    .catch(() => process.exit(1));
-});
 
 const pgm = Object.create(program);
 
-export { pgm as program, serverController };
+export { pgm as program };
 
 // ===
 // Private functions
@@ -172,9 +116,11 @@ export { pgm as program, serverController };
 
 function clone(o) {
   return typeof o === 'object' && o !== null // only clone objects
-    ? Array.isArray(o) // if cloning an array
-      ? o.map(e => clone(e)) // clone each of its elements
-      : Object.keys(o).reduce(
+    ? // eslint-disable-next-line unicorn/no-nested-ternary
+      Array.isArray(o) // if cloning an array
+      ? o.map(element => clone(element)) // clone each of its elements
+      : // eslint-disable-next-line unicorn/no-array-reduce
+        Object.keys(o).reduce(
           // otherwise reduce every key in the object
           (r, k) => ((r[k] = clone(o[k])), r),
           {}, // and save its cloned value into a new object

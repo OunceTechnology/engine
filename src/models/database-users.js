@@ -1,22 +1,24 @@
-import { db } from './db.js';
+/* eslint-disable unicorn/no-array-callback-reference */
 import UserHelper from './user-helper.js';
 
-const databaseUsers = {
+export class Users {
+  constructor(database, ObjectId, kmsHandler) {
+    this.db = database;
+    this.ObjectId = ObjectId;
+    this.kmsHandler = kmsHandler;
+  }
   async deleteUserById(id) {
     const {
       lastErrorObject: { n },
-    } = await db.users.findOneAndDelete(
-      { _id: db.toObjectId(id) },
-      { projection: { _id: 1 } },
-    );
+    } = await this.db.users.findOneAndDelete({ _id: new this.ObjectId(id) }, { projection: { _id: 1 } });
 
     if (n !== 1) {
       throw new Error('User account not deleted');
     }
-  },
+  }
 
   async updateUser(id, fields, teams) {
-    const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+    const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
     const encryptedFields = await userHelper.encryptedUser(fields);
 
@@ -47,7 +49,7 @@ const databaseUsers = {
 
     const {
       lastErrorObject: { n },
-    } = await db.users.findOneAndUpdate({ _id: db.toObjectId(id) }, update, {
+    } = await this.db.users.findOneAndUpdate({ _id: new this.ObjectId(id) }, update, {
       projection: { _id: 1, username: 1 },
     });
 
@@ -58,41 +60,40 @@ const databaseUsers = {
     if (updateAdded.$addToSet) {
       const {
         lastErrorObject: { n: n2 },
-      } = await db.users.findOneAndUpdate(
-        { _id: db.toObjectId(id) },
-        updateAdded,
-        {
-          projection: { _id: 1 },
-        },
-      );
+      } = await this.db.users.findOneAndUpdate({ _id: new this.ObjectId(id) }, updateAdded, {
+        projection: { _id: 1 },
+      });
 
       if (n2 !== 1) {
         throw new Error('Failed updating user');
       }
     }
-  },
+  }
 
   async getUserById(id, { nameOnly = false } = {}) {
-    const projection = nameOnly
-      ? { email: 1, username: 1, name: 1 }
-      : { password: 0 };
-    const encryptedUser = await db.users.findOne(
-      { _id: db.toObjectId(id) },
+    const projection = nameOnly ? { email: 1, username: 1, name: 1 } : { password: 0 };
+    const encryptedUser = await this.db.users.findOne(
+      { _id: new this.ObjectId(id) },
       {
         projection,
       },
     );
 
     if (encryptedUser) {
-      const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
-      const userHelper = new UserHelper(encryptDecrypt);
-      return await userHelper.user(encryptedUser);
+      try {
+        const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
+        const userHelper = new UserHelper(encryptDecrypt);
+        return await userHelper.user(encryptedUser);
+      } catch (error) {
+        console.dir(error.toString());
+        return encryptedUser;
+      }
     }
-  },
+  }
 
   async setUserPassword(id, password) {
-    const { ok } = await db.users.findOneAndUpdate(
-      { _id: db.toObjectId(id) },
+    const { ok } = await this.db.users.findOneAndUpdate(
+      { _id: new this.ObjectId(id) },
       {
         $set: { password, passwordLastUpdated: new Date() },
         $unset: {
@@ -105,13 +106,13 @@ const databaseUsers = {
     if (!ok) {
       throw new Error('Failed updating password, try again.');
     }
-  },
+  }
 
   async getUserByIds(ids) {
-    const dbUsers = await db.users
+    const databaseUsers = await this.db.users
       .find(
         {
-          _id: { $in: ids.map(id => db.toObjectId(id)) },
+          _id: { $in: ids.map(id => new this.ObjectId(id)) },
         },
         {
           projection: { password: 0 },
@@ -119,34 +120,36 @@ const databaseUsers = {
       )
       .toArray();
 
-    const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+    const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
     const users = await Promise.all(
-      dbUsers.map(async dbUser => await userHelper.user(dbUser)),
+      databaseUsers.map(async databaseUser => {
+        try {
+          return await userHelper.user(databaseUser);
+        } catch (error) {
+          console.dir(error.toString());
+          return databaseUser;
+        }
+      }),
     );
 
     return users;
-  },
+  }
 
-  async findUsers(
-    query,
-    projection = { name: 1, email: 1, username: 1, role: 1 },
-  ) {
-    const dbUsers = await db.users
+  async findUsers(query, projection) {
+    const databaseUsers = await this.db.users
       .find(query, {
-        projection,
+        projection: projection ?? { name: 1, email: 1, username: 1, role: 1 },
       })
       .toArray();
-    const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+    const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const users = await Promise.all(
-      dbUsers.map(async dbUser => await userHelper.user(dbUser)),
-    );
+    const users = await Promise.all(databaseUsers.map(async databaseUser => await userHelper.user(databaseUser)));
 
     return users;
-  },
+  }
 
   async getUsers({ allUsers, teamIds }) {
     const query = {};
@@ -159,24 +162,31 @@ const databaseUsers = {
       query['teams.id'] = { $in: teamIds };
     }
 
-    const dbUsers = await db.users
+    const databaseUsers = await this.db.users
       .find(query, {
         projection: { password: 0 },
       })
       .toArray();
 
-    const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+    const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
     const users = await Promise.all(
-      dbUsers.map(async dbUser => await userHelper.user(dbUser)),
+      databaseUsers.map(async databaseUser => {
+        try {
+          return await userHelper.user(databaseUser);
+        } catch (error) {
+          console.dir(error.toString());
+          return databaseUser;
+        }
+      }),
     );
 
     return users;
-  },
+  }
 
   async getUser(email, username = email) {
-    const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+    const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
     const query = {
@@ -187,9 +197,9 @@ const databaseUsers = {
       ],
     };
 
-    const dbUser = await db.users.findOne(query);
-    if (dbUser) {
-      const user = await userHelper.user(dbUser);
+    const databaseUser = await this.db.users.findOne(query);
+    if (databaseUser) {
+      const user = await userHelper.user(databaseUser);
 
       if (!user.teams) {
         user.teams = [];
@@ -197,32 +207,32 @@ const databaseUsers = {
 
       return user;
     }
-  },
+  }
 
   async getUserByToken(token, date = new Date()) {
-    const dbUser = await db.users.findOne({
+    const databaseUser = await this.db.users.findOne({
       'resetToken.token': token,
       'resetToken.validUntil': {
         $gt: date,
       },
     });
 
-    if (dbUser) {
-      const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+    if (databaseUser) {
+      const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
       const userHelper = new UserHelper(encryptDecrypt);
 
-      return await userHelper.user(dbUser);
+      return await userHelper.user(databaseUser);
     }
-  },
+  }
 
   async setUserResetToken(subject, resetToken) {
-    const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+    const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
     const field = await userHelper.encrypt(subject.toLowerCase());
 
     const query = {};
-    if (subject.indexOf('@') === -1) {
+    if (!subject.includes('@')) {
       query.username = field;
     } else {
       query.lowerEmail = field;
@@ -231,35 +241,31 @@ const databaseUsers = {
     const {
       value,
       lastErrorObject: { n },
-    } = await db.users.findOneAndUpdate(
-      query,
-      { $set: { resetToken } },
-      { projection: { password: 0 } },
-    );
+    } = await this.db.users.findOneAndUpdate(query, { $set: { resetToken } }, { projection: { password: 0 } });
     if (n == 1) {
       return await userHelper.user(value);
     }
-  },
+  }
 
   async createUser(fields) {
-    const encryptDecrypt = db.kmsHandler.getEncryptDecrypt();
+    const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
     const encryptedUser = await userHelper.encryptedUser(fields);
 
-    const { insertedId } = await db.users.insertOne(encryptedUser);
+    const { insertedId } = await this.db.users.insertOne(encryptedUser);
     return insertedId.toString();
-  },
+  }
 
   async deleteUser(userId) {
-    const deleteUser = db.users.deleteOne({ _id: db.toObjectId(userId) });
+    const deleteUser = this.db.users.deleteOne({ _id: new this.ObjectId(userId) });
     const deleteTokens = this.deleteJSONWebTokensForUser(userId);
 
     /**
      * XXX: This is a terrible hack until we get foreign key constraint support
-     * turned on with node-sqlite. As is this could leave junk around in the db.
+     * turned on with node-sqlite. As is this could leave junk around in the this.db.
      */
     return Promise.all([deleteTokens, deleteUser]);
-  },
-};
+  }
+}
 
-export { databaseUsers, UserHelper, db };
+export { UserHelper };

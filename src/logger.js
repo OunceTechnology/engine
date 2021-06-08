@@ -2,7 +2,7 @@ import pino from 'pino';
 
 let logger;
 
-export function createLogger(opts, location) {
+export function createLogger(options, location) {
   const destination = pino.destination(location);
 
   if (location) {
@@ -12,11 +12,11 @@ export function createLogger(opts, location) {
     });
   }
 
-  return pino(opts, destination);
+  return pino(options, destination);
 }
 
-export function initLogger(opts) {
-  logger = createLogger(opts);
+export function initLogger(options) {
+  logger = createLogger(options);
 }
 
 export { logger };
