@@ -3,8 +3,10 @@ import fastifyFormbody from 'fastify-formbody';
 import fastifyHelmet from 'fastify-helmet';
 import fastifyMongodb from 'fastify-mongodb';
 import fastifySensible from 'fastify-sensible';
-import { MongoClient } from 'mongodb';
+import mongodb from 'mongodb';
 import { engineDatabasePlugin, KmsHandler } from './models/index.js';
+
+const { MongoClient } = mongodb;
 
 const _defaultCspDirectives = {
   defaultSrc: [`'self'`],
@@ -83,7 +85,11 @@ const ServerController = {
 
     // note: pass in client as letting fastifyMongodb create it
     // fails since v4.0.0
-    const client = await MongoClient.connect(url, options);
+    const client = await MongoClient.connect(url, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      ...options,
+    });
     fastify.addHook('onClose', () => client.close());
 
     fastify
