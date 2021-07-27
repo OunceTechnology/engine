@@ -3,6 +3,7 @@ import fastifyFormbody from 'fastify-formbody';
 import fastifyHelmet from 'fastify-helmet';
 import fastifyMongodb from 'fastify-mongodb';
 import fastifySensible from 'fastify-sensible';
+import { MongoClient } from 'mongodb';
 import { engineDatabasePlugin, KmsHandler } from './models/index.js';
 
 const _defaultCspDirectives = {
@@ -36,7 +37,11 @@ const ServerController = {
     // As a failsafe use port 0 if the input isn't defined
     // this will result in a random port being assigned
     // See : https://nodejs.org/api/http.html for details
-    if (typeof port === 'undefined' || port === null || Number.isNaN(Number.parseInt(port, 10))) {
+    if (
+      typeof port === 'undefined' ||
+      port === null ||
+      Number.isNaN(Number.parseInt(port, 10))
+    ) {
       port = 0;
     }
 
@@ -76,42 +81,56 @@ const ServerController = {
 
     const { url, database, csfle, options } = dbConfig;
 
-    fastify.register(fastifyMongodb, { url, ...options }).register(async (fastify, options, next) => {
-      const client = fastify.mongo.client;
-      const database_ = client.db(database);
+    // note: pass in client as letting fastifyMongodb create it
+    // fails since v4.0.0
+    const client = await MongoClient.connect(url, options);
+    fastify.addHook('onClose', () => client.close());
 
-      const database__ = new Proxy(database_, {
-        get: function (object, property) {
-          const databaseProperty = object[property] || database_[property];
-          return databaseProperty ? databaseProperty : database_.collection(property);
-        },
-      });
-      fastify.mongo.db = database__;
+    fastify
+      .register(fastifyMongodb, { url, client })
+      .register(async (fastify, options, next) => {
+        const client = fastify.mongo.client;
+        const database_ = client.db(database);
 
-      if (csfle) {
-        const key = typeof csfle.masterKey === 'string' ? Buffer.from(csfle.masterKey, 'base64') : csfle.masterKey;
-
-        const _kmsHandler = new KmsHandler({
-          kmsProviders: {
-            local: {
-              key,
-            },
+        const database__ = new Proxy(database_, {
+          get: function (object, property) {
+            const databaseProperty = object[property] || database_[property];
+            return databaseProperty
+              ? databaseProperty
+              : database_.collection(property);
           },
-          client,
-          keyAltNames: csfle.keyAltNames,
         });
+        fastify.mongo.db = database__;
 
-        await _kmsHandler.findOrCreateDataKey();
+        if (csfle) {
+          const key =
+            typeof csfle.masterKey === 'string'
+              ? Buffer.from(csfle.masterKey, 'base64')
+              : csfle.masterKey;
 
-        fastify.mongo.kmsHandler = _kmsHandler;
-      }
-      next();
-    });
+          const _kmsHandler = new KmsHandler({
+            kmsProviders: {
+              local: {
+                key,
+              },
+            },
+            client,
+            keyAltNames: csfle.keyAltNames,
+          });
 
-    fastify.register(engineDatabasePlugin, {}).register(async (instance, options, next) => {
-      await dbSetup(instance);
-      next();
-    });
+          await _kmsHandler.findOrCreateDataKey();
+
+          fastify.mongo.kmsHandler = _kmsHandler;
+        }
+        next();
+      });
+
+    fastify
+      .register(engineDatabasePlugin, {})
+      .register(async (instance, options, next) => {
+        await dbSetup(instance);
+        next();
+      });
 
     this.fastify = fastify;
 
