@@ -13,7 +13,16 @@ const program = {
     try {
       const serverConfig = await new ServerConfig().config();
 
-      const { csp, cors, PORT: port, SSLPORT: sslPort, logLevel = 'info', pidFile, listenOn, db } = serverConfig;
+      const {
+        csp,
+        cors,
+        PORT: port,
+        SSLPORT: sslPort,
+        logLevel = 'info',
+        pidFile,
+        listenOn,
+        db,
+      } = serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -24,7 +33,7 @@ const program = {
 
       const databaseConfig = clone(db);
 
-      const fastify = serverController.setupExpress({
+      const fastify = await serverController.setupExpress({
         csp,
         cors,
         logLevel,

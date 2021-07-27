@@ -63,7 +63,7 @@ const ServerController = {
     }
   },
 
-  setupExpress({ csp, logLevel, dbConfig, dbSetup }) {
+  async setupExpress({ csp, logLevel, dbConfig, dbSetup }) {
     // eslint-disable-next-line new-cap
     const fastify = Fastify({ trustProxy: true, logger: { level: logLevel } });
 
