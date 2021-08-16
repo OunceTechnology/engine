@@ -242,6 +242,29 @@ export class Users {
     }
   }
 
+  async activateAccount(code, date = new Date()) {
+    const { ok } = await this.db.users.findOneAndUpdate(
+      {
+        'activationToken.token': code,
+        'activationToken.validUntil': {
+          $gt: date,
+        },
+      },
+      {
+        $set: { status: 'registered', isActive: 'yes' },
+        $unset: {
+          resetToken: 1,
+          activationToken: 1,
+        },
+      },
+      { projection: { status: 1 } },
+    );
+
+    if (!ok) {
+      throw new Error('Invalid activation code.');
+    }
+  }
+
   async setFields(subject, fields = {}) {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
