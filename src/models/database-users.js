@@ -265,6 +265,23 @@ export class Users {
     }
   }
 
+  async setFieldsForId(id, fields = {}) {
+    const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
+    const userHelper = new UserHelper(encryptDecrypt);
+
+    const {
+      value,
+      lastErrorObject: { n },
+    } = await this.db.users.findOneAndUpdate(
+      { _id: new this.ObjectId(id) },
+      { $set: fields },
+      { projection: { password: 0 } },
+    );
+    if (n == 1) {
+      return await userHelper.user(value);
+    }
+  }
+
   async unregister(id) {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
@@ -273,7 +290,7 @@ export class Users {
       value,
       lastErrorObject: { n },
     } = await this.db.users.findOneAndUpdate(
-      { _id: this.db.toObjectId(id) },
+      { _id: new this.ObjectId(id) },
       { $set: { status: 'pending' } },
       { projection: { _id: 1 } },
     );
