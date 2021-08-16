@@ -10,7 +10,10 @@ export class Users {
   async deleteUserById(id) {
     const {
       lastErrorObject: { n },
-    } = await this.db.users.findOneAndDelete({ _id: new this.ObjectId(id) }, { projection: { _id: 1 } });
+    } = await this.db.users.findOneAndDelete(
+      { _id: new this.ObjectId(id) },
+      { projection: { _id: 1 } },
+    );
 
     if (n !== 1) {
       throw new Error('User account not deleted');
@@ -49,9 +52,13 @@ export class Users {
 
     const {
       lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate({ _id: new this.ObjectId(id) }, update, {
-      projection: { _id: 1, username: 1 },
-    });
+    } = await this.db.users.findOneAndUpdate(
+      { _id: new this.ObjectId(id) },
+      update,
+      {
+        projection: { _id: 1, username: 1 },
+      },
+    );
 
     if (n !== 1) {
       throw new Error('Failed updating user');
@@ -60,9 +67,13 @@ export class Users {
     if (updateAdded.$addToSet) {
       const {
         lastErrorObject: { n: n2 },
-      } = await this.db.users.findOneAndUpdate({ _id: new this.ObjectId(id) }, updateAdded, {
-        projection: { _id: 1 },
-      });
+      } = await this.db.users.findOneAndUpdate(
+        { _id: new this.ObjectId(id) },
+        updateAdded,
+        {
+          projection: { _id: 1 },
+        },
+      );
 
       if (n2 !== 1) {
         throw new Error('Failed updating user');
@@ -71,7 +82,9 @@ export class Users {
   }
 
   async getUserById(id, { nameOnly = false } = {}) {
-    const projection = nameOnly ? { email: 1, username: 1, name: 1 } : { password: 0 };
+    const projection = nameOnly
+      ? { email: 1, username: 1, name: 1 }
+      : { password: 0 };
     const encryptedUser = await this.db.users.findOne(
       { _id: new this.ObjectId(id) },
       {
@@ -146,7 +159,11 @@ export class Users {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const users = await Promise.all(databaseUsers.map(async databaseUser => await userHelper.user(databaseUser)));
+    const users = await Promise.all(
+      databaseUsers.map(
+        async databaseUser => await userHelper.user(databaseUser),
+      ),
+    );
 
     return users;
   }
@@ -225,23 +242,24 @@ export class Users {
     }
   }
 
-  async setUserResetToken(subject, resetToken) {
+  async setFields(subject, fields = {}) {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const field = await userHelper.encrypt(subject.toLowerCase());
+    const queryField = await userHelper.encrypt(subject.toLowerCase());
 
-    const query = {};
-    if (!subject.includes('@')) {
-      query.username = field;
-    } else {
-      query.lowerEmail = field;
-    }
+    const query = subject.includes('@')
+      ? { lowerEmail: queryField }
+      : { username: queryField };
 
     const {
       value,
       lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate(query, { $set: { resetToken } }, { projection: { password: 0 } });
+    } = await this.db.users.findOneAndUpdate(
+      query,
+      { $set: fields },
+      { projection: { password: 0 } },
+    );
     if (n == 1) {
       return await userHelper.user(value);
     }
@@ -257,7 +275,9 @@ export class Users {
   }
 
   async deleteUser(userId) {
-    const deleteUser = this.db.users.deleteOne({ _id: new this.ObjectId(userId) });
+    const deleteUser = this.db.users.deleteOne({
+      _id: new this.ObjectId(userId),
+    });
     const deleteTokens = this.deleteJSONWebTokensForUser(userId);
 
     /**
