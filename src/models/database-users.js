@@ -260,9 +260,7 @@ export class Users {
       { projection: { status: 1 } },
     );
 
-    if (!ok) {
-      throw new Error('Invalid activation code.');
-    }
+    return ok;
   }
 
   async setFields(subject, fields = {}) {
