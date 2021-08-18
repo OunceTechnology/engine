@@ -243,7 +243,10 @@ export class Users {
   }
 
   async activateAccount(code, date = new Date()) {
-    const { ok } = await this.db.users.findOneAndUpdate(
+    const {
+      value,
+      lastErrorObject: { n },
+    } = await this.db.users.findOneAndUpdate(
       {
         'activationToken.token': code,
         'activationToken.validUntil': {
@@ -260,7 +263,7 @@ export class Users {
       { projection: { status: 1 } },
     );
 
-    return ok;
+    return n === 1 ? value : undefined;
   }
 
   async setFields(subject, fields = {}) {
