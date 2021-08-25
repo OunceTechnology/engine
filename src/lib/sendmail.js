@@ -1,6 +1,7 @@
 import appRoot from 'app-root-path';
 import serverConfig from 'config';
 import Email from 'email-templates';
+import fs from 'node:fs/promises';
 import path, { join } from 'node:path';
 import util from 'node:util';
 import nodemailer from 'nodemailer';
@@ -9,9 +10,27 @@ import pickupTransport from './pickup-transport.js';
 
 let transporter;
 
+async function getLocales(localeFolder) {
+  try {
+    const files = await fs.readdir(localeFolder);
+
+    const locales = files
+      .filter(file => path.extname(file) === '.json')
+      .map(file => path.basename(file, '.json'));
+
+    return locales;
+  } catch (error) {
+    console.dir(error);
+    return ['en'];
+  }
+}
+
 async function send(options = {}) {
   const dirname = join(appRoot.path, 'pickup');
-  console.dir(dirname);
+
+  const localeFolder = options.localePath ?? './locales';
+
+  const locales = await getLocales(localeFolder);
 
   options.locals = {
     ...options.locals,
@@ -39,7 +58,10 @@ async function send(options = {}) {
     let transport = {};
 
     if (pickup !== undefined && pickup) {
-      const directory = path.join(dirname, typeof pickup === 'string' ? pickup : './pickup');
+      const directory = path.join(
+        dirname,
+        typeof pickup === 'string' ? pickup : './pickup',
+      );
 
       transport = pickupTransport({
         directory,
@@ -67,7 +89,7 @@ async function send(options = {}) {
   const emailConfig = {
     i18n: {
       defaultLocale: 'en',
-      locales: sendMail.locales ?? ['en'],
+      locales,
       fallbacks: sendMail.fallbacks ?? {},
       syncFiles: false,
       updateFiles: false,
