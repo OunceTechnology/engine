@@ -28,7 +28,9 @@ async function getLocales(localeFolder) {
 async function send(options = {}) {
   const dirname = join(appRoot.path, 'pickup');
 
-  const localeFolder = options.localePath ?? './locales';
+  const { SMTP_PICKUP: pickup, sendMail, ProductName } = serverConfig;
+
+  const localeFolder = sendMail.localePath ?? './locales';
 
   const locales = await getLocales(localeFolder);
 
@@ -47,8 +49,6 @@ async function send(options = {}) {
   if (!options.locals.locale) {
     options.locals.locale = 'en';
   }
-
-  const { SMTP_PICKUP: pickup, sendMail, ProductName } = serverConfig;
 
   if (!options.locals.productName) {
     options.locals.productName = ProductName ?? 'Not defined';
@@ -94,6 +94,7 @@ async function send(options = {}) {
       syncFiles: false,
       updateFiles: false,
       objectNotation: true,
+      directory: localeFolder,
     },
     views: {
       root: templateDirectory,
