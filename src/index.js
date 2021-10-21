@@ -1,4 +1,4 @@
-import auth from './auth.js';
+import { Auth } from './auth.js';
 import RandomString from './lib/random-string.js';
 import sendmail from './lib/sendmail.js';
 import { logger } from './logger.js';
@@ -20,6 +20,6 @@ export {
   UserHelper,
   Passwords,
   sendmail,
-  auth,
+  Auth,
   toObjectId,
 };
