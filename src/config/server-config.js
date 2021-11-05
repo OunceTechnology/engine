@@ -1,5 +1,7 @@
 import appRoot from 'app-root-path';
+import Buffer from 'node:buffer';
 import fsc from 'node:fs';
+import process from 'node:process';
 import aesUtil from './aes-util.js';
 import CryptoConfig from './crypto-config.js';
 
@@ -31,7 +33,8 @@ export class ServerConfig {
 
   async config() {
     this.apiKey = await (loadKeyFromEnvironment() ?? this.loadKeyFromFile());
-    return new CryptoConfig(value => aesUtil.decrypt(value, this.apiKey)).config;
+    return new CryptoConfig(value => aesUtil.decrypt(value, this.apiKey))
+      .config;
   }
 
   async loadKeyFromFile() {

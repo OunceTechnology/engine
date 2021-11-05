@@ -4,6 +4,8 @@ import fastifyHelmet from 'fastify-helmet';
 import fastifyMongodb from 'fastify-mongodb';
 import fastifySensible from 'fastify-sensible';
 import mongodb from 'mongodb';
+import Buffer from 'node:buffer';
+import process from 'node:process';
 import { engineDatabasePlugin, KmsHandler } from './models/index.js';
 
 const { MongoClient } = mongodb;
@@ -34,7 +36,7 @@ const ServerController = {
     return Promise.resolve(this.expressServer.close());
   },
 
-  startServer({ port, sslPort, listenOn }) {
+  startServer({ port, listenOn }) {
     port = process.env.PORT || port;
     // As a failsafe use port 0 if the input isn't defined
     // this will result in a random port being assigned

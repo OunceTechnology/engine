@@ -6,7 +6,7 @@
  **/
 
 import asn1 from 'asn1.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 /**
  * This curve goes by different names in different standards.
@@ -42,9 +42,9 @@ const SubjectPublicKeyInfoASN = asn1.define(
 
 // Chosen because it is _must_ implement.
 // https://tools.ietf.org/html/rfc5480#section-2.1.1
-const UNRESTRICTED_ALGORITHM_ID = [1, 2, 840, 10045, 2, 1];
+const UNRESTRICTED_ALGORITHM_ID = [1, 2, 840, 10_045, 2, 1];
 // https://tools.ietf.org/html/rfc5480#section-2.1.1.1 (secp256r1)
-const SECP256R1_CURVE = [1, 2, 840, 10045, 3, 1, 7];
+const SECP256R1_CURVE = [1, 2, 840, 10_045, 3, 1, 7];
 
 /**
  * Generate a public/private key pair.

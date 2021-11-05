@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import process from 'node:process';
 import util from 'node:util';
 import { ServerConfig } from './config/server-config.js';
 import { database } from './index.js';

@@ -1,7 +1,5 @@
 import bcrypt from 'bcryptjs';
 
-const SALT_WORK_FACTOR_ = 10;
-
 export class Auth {
   constructor(database, ObjectId) {
     this.db = database;

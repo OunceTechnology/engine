@@ -346,4 +346,4 @@ export class Users {
   }
 }
 
-export { UserHelper };
+export { default as UserHelper } from './user-helper.js';

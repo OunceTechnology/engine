@@ -1,4 +1,5 @@
 import mongodb from 'mongodb';
+import Buffer from 'node:buffer';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -36,19 +37,17 @@ function loadCAcert(name) {
 const database_ = {
   init(dbg) {
     return Promise.resolve(loadCAcert(dbg.ca))
-      .then(async ca => {
+      .then(async () => {
         const { url, database, csfle } = dbg;
 
         const options = {
-          ...{
-            // writeConcern: {
-            //   w: 1,
-            // },
-            poolSize: 10,
-            authMechanism: 'SCRAM-SHA-1',
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-          },
+          // writeConcern: {
+          //   w: 1,
+          // },
+          poolSize: 10,
+          authMechanism: 'SCRAM-SHA-1',
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
           ...dbg.options,
         };
 
@@ -62,7 +61,10 @@ const database_ = {
         _client = client;
 
         if (csfle) {
-          const key = typeof csfle.masterKey === 'string' ? Buffer.from(csfle.masterKey, 'base64') : csfle.masterKey;
+          const key =
+            typeof csfle.masterKey === 'string'
+              ? Buffer.from(csfle.masterKey, 'base64')
+              : csfle.masterKey;
 
           _kmsHandler = new KmsHandler({
             kmsProviders: {

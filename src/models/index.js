@@ -1,5 +1,3 @@
-import engineDatabasePlugin from './engine-database-plugin.js';
-import { KmsHandler } from './kms-handler.js';
-import UserUtils from './user-utils.js';
-
-export { UserUtils, engineDatabasePlugin, KmsHandler };
+export { default as engineDatabasePlugin } from './engine-database-plugin.js';
+export { KmsHandler } from './kms-handler.js';
+export { default as UserUtils } from './user-utils.js';

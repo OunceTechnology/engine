@@ -1,4 +1,6 @@
 import mce from 'mongodb-client-encryption';
+import Buffer from 'node:buffer';
+import process from 'node:process';
 import { logger } from '../logger.js';
 
 const ENC_DETERM = 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic';
@@ -8,7 +10,7 @@ const { ClientEncryption } = mce;
 
 class KmsHandler {
   constructor({
-    kmsProviders = null,
+    kmsProviders,
     keyDB = 'encryption',
     keyColl = '__keyVault',
     client,
@@ -53,8 +55,8 @@ class KmsHandler {
             },
           },
         });
-    } catch (e) {
-      logger.error(e);
+    } catch (error) {
+      logger.error(error);
       process.exit(1);
     }
   }
@@ -83,9 +85,14 @@ class KmsHandler {
         await this.client
           .db(this.keyDB)
           .collection(this.keyColl)
-          .findOneAndUpdate({ _id: dataKey }, { $set: { keyAltNames: [this.keyAltNames] } });
+          .findOneAndUpdate(
+            { _id: dataKey },
+            { $set: { keyAltNames: [this.keyAltNames] } },
+          );
       } catch (error) {
-        console.log(`failed to add keyaltname ${this.keyAltNames}, ${error.stack}`);
+        console.log(
+          `failed to add keyaltname ${this.keyAltNames}, ${error.stack}`,
+        );
       }
     } else {
       this.dataKeyId = dataKey._id;
@@ -104,7 +111,7 @@ class KmsHandler {
   getEncryptDecrypt() {
     const clientEncryption = this.getClientEncryption();
     return {
-      decrypt: val => clientEncryption.decrypt(val),
+      decrypt: value => clientEncryption.decrypt(value),
       encrypt: (value, keyId = this.dataKeyId, algorithm = ENC_DETERM) =>
         clientEncryption.encrypt(value, { keyId, algorithm }),
     };
@@ -112,10 +119,15 @@ class KmsHandler {
 
   getDecrypt() {
     const clientEncryption = this.getClientEncryption();
-    return val => clientEncryption.decrypt(val);
+    return value => clientEncryption.decrypt(value);
   }
 
-  async encrypt(clientEncryption, value, keyId = this.dataKeyId, algorithm = ENC_DETERM) {
+  async encrypt(
+    clientEncryption,
+    value,
+    keyId = this.dataKeyId,
+    algorithm = ENC_DETERM,
+  ) {
     return clientEncryption.encrypt(value, { keyId, algorithm });
   }
 

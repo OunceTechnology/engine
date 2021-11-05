@@ -5,8 +5,10 @@ const _totalOf = (numberStrings, log2Risk) => {
     return 0;
   }
 
-  let N;
-  N = numberStrings < 1000 ? _log2(numberStrings) + _log2(numberStrings - 1) : 2 * _log2(numberStrings);
+  const N =
+    numberStrings < 1000
+      ? _log2(numberStrings) + _log2(numberStrings - 1)
+      : 2 * _log2(numberStrings);
   return N + log2Risk - 1;
 };
 

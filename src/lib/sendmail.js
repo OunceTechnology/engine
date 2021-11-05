@@ -36,13 +36,12 @@ async function send(options = {}) {
 
   options.locals = {
     ...options.locals,
-    ...{
-      tt(key, options_) {
-        return options_.data.root.t(
-          { phrase: key, locale: options_.data.root.locale },
-          { ...options.locals, ...options_.hash },
-        );
-      },
+
+    tt(key, options_) {
+      return options_.data.root.t(
+        { phrase: key, locale: options_.data.root.locale },
+        { ...options.locals, ...options_.hash },
+      );
     },
   };
 

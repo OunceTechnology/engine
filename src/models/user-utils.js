@@ -5,12 +5,12 @@ function slugify(text) {
     .replace(/ +/g, '-');
 }
 
-function toTitleCase(str) {
-  if (typeof str !== 'string') {
-    return str;
+function toTitleCase(string_) {
+  if (typeof string_ !== 'string') {
+    return string_;
   }
-  return str.replace(/\w\S*/g, function (txt) {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  return string_.replace(/\w\S*/g, function (txt) {
+    return txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase();
   });
 }
 
