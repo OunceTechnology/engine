@@ -1,5 +1,5 @@
 import mce from 'mongodb-client-encryption';
-import Buffer from 'node:buffer';
+import { Buffer } from 'node:buffer';
 import process from 'node:process';
 import { logger } from '../logger.js';
 

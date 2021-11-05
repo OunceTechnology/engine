@@ -4,7 +4,7 @@ import fastifyHelmet from 'fastify-helmet';
 import fastifyMongodb from 'fastify-mongodb';
 import fastifySensible from 'fastify-sensible';
 import mongodb from 'mongodb';
-import Buffer from 'node:buffer';
+import { Buffer } from 'node:buffer';
 import process from 'node:process';
 import { engineDatabasePlugin, KmsHandler } from './models/index.js';
 

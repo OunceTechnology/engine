@@ -1,4 +1,4 @@
-import Buffer from 'node:buffer';
+import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import util from 'node:util';
 import { logger } from '../logger.js';

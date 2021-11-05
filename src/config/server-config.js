@@ -1,5 +1,5 @@
 import appRoot from 'app-root-path';
-import Buffer from 'node:buffer';
+import { Buffer } from 'node:buffer';
 import fsc from 'node:fs';
 import process from 'node:process';
 import aesUtil from './aes-util.js';
