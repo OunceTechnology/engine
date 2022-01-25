@@ -70,7 +70,12 @@ const ServerController = {
     }
   },
 
-  async setupExpress({ helmet, logLevel, dbConfig, dbSetup }) {
+  async setupExpress({
+    helmet = _defaultHelmetDirectives,
+    logLevel,
+    dbConfig,
+    dbSetup,
+  }) {
     // eslint-disable-next-line new-cap
     const fastify = Fastify({ trustProxy: true, logger: { level: logLevel } });
 
@@ -78,16 +83,17 @@ const ServerController = {
 
     fastify.register(fastifyFormbody);
 
-    const directives = helmet
-      ? { optionsDefault: true, ...helmet }
-      : _defaultHelmetDirectives;
+    if (helmet.contentSecurityPolicy.optionsDefault == undefined) {
+      helmet.contentSecurityPolicy.optionsDefault = true;
+    }
 
-    fastify.register(fastifyHelmet, {
+    const helmetOptions = {
       dnsPrefetchControl: false,
       expectCt: false,
-      ...directives,
-    });
+      ...helmet,
+    };
 
+    fastify.register(fastifyHelmet, helmetOptions);
     const { url, database, csfle, options } = dbConfig;
 
     // note: pass in client as letting fastifyMongodb create it
