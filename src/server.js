@@ -15,7 +15,7 @@ const program = {
       const serverConfig = await new ServerConfig().config();
 
       const {
-        csp,
+        helmet,
         cors,
         PORT: port,
         SSLPORT: sslPort,
@@ -35,7 +35,7 @@ const program = {
       const databaseConfig = clone(db);
 
       const fastify = await serverController.setupExpress({
-        csp,
+        helmet,
         cors,
         logLevel,
         dbConfig: databaseConfig,

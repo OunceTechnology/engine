@@ -10,21 +10,24 @@ import { engineDatabasePlugin, KmsHandler } from './models/index.js';
 
 const { MongoClient } = mongodb;
 
-const _defaultCspDirectives = {
-  defaultSrc: [`'self'`],
-  scriptSrc: [
-    `'self'`,
-    `'unsafe-inline'`,
-    `'unsafe-eval'`,
-    '*.ounce.ac',
-    'ajax.googleapis.com',
-    'www.google-analytics.com',
-  ],
-  frameSrc: ['www.youtube.com'],
-  fontSrc: [`*`],
-  imgSrc: [`*`, `blob:`, `data:`],
-  mediaSrc: [`*`, `blob:`, `data:`],
-  styleSrc: [`'self'`, `'unsafe-inline'`],
+const _defaultHelmetDirectives = {
+  optionsDefault: true,
+  contentSecurityPolicy: {
+    defaultSrc: [`'self'`],
+    scriptSrc: [
+      `'self'`,
+      `'unsafe-inline'`,
+      `'unsafe-eval'`,
+      '*.ounce.ac',
+      'ajax.googleapis.com',
+      'www.google-analytics.com',
+    ],
+    frameSrc: ['www.youtube.com'],
+    fontSrc: [`*`],
+    imgSrc: [`*`, `blob:`, `data:`],
+    mediaSrc: [`*`, `blob:`, `data:`],
+    styleSrc: [`'self'`, `'unsafe-inline'`],
+  },
 };
 
 const ServerController = {
@@ -67,7 +70,7 @@ const ServerController = {
     }
   },
 
-  async setupExpress({ csp, logLevel, dbConfig, dbSetup }) {
+  async setupExpress({ helmet, logLevel, dbConfig, dbSetup }) {
     // eslint-disable-next-line new-cap
     const fastify = Fastify({ trustProxy: true, logger: { level: logLevel } });
 
@@ -75,12 +78,14 @@ const ServerController = {
 
     fastify.register(fastifyFormbody);
 
-    const directives = csp || _defaultCspDirectives;
+    const directives = helmet
+      ? { optionsDefault: true, ...helmet }
+      : _defaultHelmetDirectives;
 
     fastify.register(fastifyHelmet, {
       dnsPrefetchControl: false,
       expectCt: false,
-      contentSecurityPolicy: { optionsDefault: true, directives },
+      ...directives,
     });
 
     const { url, database, csfle, options } = dbConfig;
