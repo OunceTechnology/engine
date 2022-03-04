@@ -33,8 +33,7 @@ export class ServerConfig {
 
   async config() {
     this.apiKey = await (loadKeyFromEnvironment() ?? this.loadKeyFromFile());
-    return new CryptoConfig(value => aesUtil.decrypt(value, this.apiKey))
-      .config;
+    return new CryptoConfig(value => aesUtil.decrypt(value, this.apiKey)).config;
   }
 
   async loadKeyFromFile() {

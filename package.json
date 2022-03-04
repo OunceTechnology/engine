@@ -1,6 +1,6 @@
 {
   "name": "@ounce/engine",
-  "version": "4.3.0",
+  "version": "5.0.0",
   "description": "Ounce engine",
   "main": "./src/index.js",
   "exports": {
@@ -22,10 +22,10 @@
   "homepage": "https://github.com/OunceTechnology/engine#readme",
   "dependencies": {},
   "devDependencies": {
-    "eslint": "^8",
+    "eslint": "^8.10.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-unicorn": "^38.0.0"
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-unicorn": "^41.0.0"
   },
   "eslintConfig": {
     "extends": [
@@ -36,11 +36,17 @@
       "browser": true
     },
     "rules": {
-      "no-unused-vars": "error",
       "no-else-return": 1,
       "prefer-const": "error",
       "no-var": "error",
-      "unicorn/no-array-reduce": [
+      "no-unused-vars": [
+        "error",
+        {
+          "ignoreRestSiblings": true
+        }
+      ],
+      "no-nested-ternary": "off",
+      "unicorn/no-nested-ternary": [
         "off"
       ],
       "unicorn/prevent-abbreviations": [

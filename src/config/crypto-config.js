@@ -7,17 +7,21 @@ class Config {
 
     const clone = o =>
       typeof o === 'object' && o !== null // only clone objects
-        ? (Array.isArray(o) // if cloning an array
+        ? Array.isArray(o) // if cloning an array
           ? o.map(error => clone(error)) // clone each of its elements
-          // eslint-disable-next-line unicorn/no-array-reduce
-          : Object.keys(o).reduce(
-              // otherwise reduce every key in the object
-              (r, k) => ((r[k] = clone(o[k])), r),
-              {}, // and save its cloned value into a new object
-            ))
-        : (typeof o === 'string' && o.startsWith('!secret')
+          : cloneAll(o)
+        : typeof o === 'string' && o.startsWith('!secret')
         ? decrypt(o.slice(8))
-        : o);
+        : o;
+
+    const cloneAll = o => {
+      const ca = {};
+
+      for (const key of Object.keys(o)) {
+        ca[key] = clone(o[key]);
+      }
+      return ca;
+    };
 
     this.config = clone(this.orig);
   }

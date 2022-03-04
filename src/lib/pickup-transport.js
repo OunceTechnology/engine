@@ -21,10 +21,8 @@ class PickupTransport {
     mail.message.keepBcc = true;
     let callbackSent = false;
     const filename =
-      ((mail.message.getHeader('message-id') || '').replace(
-        /[^\d.@_a-z-]/g,
-        '',
-      ) || crypto.randomBytes(10).toString('hex')) + '.eml'; // eslint-disable-line prefer-template
+      ((mail.message.getHeader('message-id') || '').replace(/[^\d.@_a-z-]/g, '') ||
+        crypto.randomBytes(10).toString('hex')) + '.eml'; // eslint-disable-line prefer-template
     const target = path.join(this.options.directory, filename);
     const output = fs.createWriteStream(target);
     const input = mail.message.createReadStream();

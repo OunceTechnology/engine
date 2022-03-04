@@ -12,10 +12,7 @@ export class Teams {
   async deleteTeam(teamId) {
     const {
       lastErrorObject: { n },
-    } = await this.db.teams.findOneAndDelete(
-      { _id: new this.ObjectId(teamId) },
-      { projection: { _id: 1 } },
-    );
+    } = await this.db.teams.findOneAndDelete({ _id: new this.ObjectId(teamId) }, { projection: { _id: 1 } });
 
     if (n !== 1) {
       throw new Error('Team not deleted');
@@ -28,9 +25,7 @@ export class Teams {
   }
 
   async getTeamsById(ids) {
-    return this.db.teams
-      .find({ _id: { $in: ids.map(id => new this.ObjectId(id)) } })
-      .toArray();
+    return this.db.teams.find({ _id: { $in: ids.map(id => new this.ObjectId(id)) } }).toArray();
   }
 
   async getTeamByName(name) {
@@ -46,11 +41,7 @@ export class Teams {
 
     const {
       lastErrorObject: { n },
-    } = await this.db.teams.findOneAndUpdate(
-      { _id },
-      { $set: team },
-      { projection: { _id: 1 } },
-    );
+    } = await this.db.teams.findOneAndUpdate({ _id }, { $set: team }, { projection: { _id: 1 } });
 
     if (n !== 1) {
       throw new Error('Failed updating team');

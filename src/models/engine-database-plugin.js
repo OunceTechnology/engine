@@ -2,7 +2,7 @@ import fp from 'fastify-plugin';
 import { Teams } from './database-teams.js';
 import { Users } from './database-users.js';
 
-export default fp((instance, options, next) => {
+export default fp((instance, _, next) => {
   const {
     mongo: { db, ObjectId, kmsHandler },
   } = instance;

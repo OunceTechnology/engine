@@ -10,10 +10,7 @@ export class Users {
   async deleteUserById(id) {
     const {
       lastErrorObject: { n },
-    } = await this.db.users.findOneAndDelete(
-      { _id: new this.ObjectId(id) },
-      { projection: { _id: 1 } },
-    );
+    } = await this.db.users.findOneAndDelete({ _id: new this.ObjectId(id) }, { projection: { _id: 1 } });
 
     if (n !== 1) {
       throw new Error('User account not deleted');
@@ -52,13 +49,9 @@ export class Users {
 
     const {
       lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate(
-      { _id: new this.ObjectId(id) },
-      update,
-      {
-        projection: { _id: 1, username: 1 },
-      },
-    );
+    } = await this.db.users.findOneAndUpdate({ _id: new this.ObjectId(id) }, update, {
+      projection: { _id: 1, username: 1 },
+    });
 
     if (n !== 1) {
       throw new Error('Failed updating user');
@@ -67,13 +60,9 @@ export class Users {
     if (updateAdded.$addToSet) {
       const {
         lastErrorObject: { n: n2 },
-      } = await this.db.users.findOneAndUpdate(
-        { _id: new this.ObjectId(id) },
-        updateAdded,
-        {
-          projection: { _id: 1 },
-        },
-      );
+      } = await this.db.users.findOneAndUpdate({ _id: new this.ObjectId(id) }, updateAdded, {
+        projection: { _id: 1 },
+      });
 
       if (n2 !== 1) {
         throw new Error('Failed updating user');
@@ -82,9 +71,7 @@ export class Users {
   }
 
   async getUserById(id, { nameOnly = false } = {}) {
-    const projection = nameOnly
-      ? { email: 1, username: 1, name: 1 }
-      : { password: 0 };
+    const projection = nameOnly ? { email: 1, username: 1, name: 1 } : { password: 0 };
     const encryptedUser = await this.db.users.findOne(
       { _id: new this.ObjectId(id) },
       {
@@ -152,6 +139,7 @@ export class Users {
 
   async findUsers(query, projection) {
     const databaseUsers = await this.db.users
+      // eslint-disable-next-line unicorn/no-array-method-this-argument
       .find(query, {
         projection: projection ?? { name: 1, email: 1, username: 1, role: 1 },
       })
@@ -159,11 +147,7 @@ export class Users {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const users = await Promise.all(
-      databaseUsers.map(
-        async databaseUser => await userHelper.user(databaseUser),
-      ),
-    );
+    const users = await Promise.all(databaseUsers.map(async databaseUser => await userHelper.user(databaseUser)));
 
     return users;
   }
@@ -180,6 +164,7 @@ export class Users {
     }
 
     const databaseUsers = await this.db.users
+      // eslint-disable-next-line unicorn/no-array-method-this-argument
       .find(query, {
         projection: { password: 0 },
       })
@@ -272,18 +257,12 @@ export class Users {
 
     const queryField = await userHelper.encrypt(subject.toLowerCase());
 
-    const query = subject.includes('@')
-      ? { lowerEmail: queryField }
-      : { username: queryField };
+    const query = subject.includes('@') ? { lowerEmail: queryField } : { username: queryField };
 
     const {
       value,
       lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate(
-      query,
-      { $set: fields },
-      { projection: { password: 0 } },
-    );
+    } = await this.db.users.findOneAndUpdate(query, { $set: fields }, { projection: { password: 0 } });
     if (n == 1) {
       return await userHelper.user(value);
     }

@@ -2,28 +2,15 @@ import fs from 'node:fs';
 import process from 'node:process';
 import util from 'node:util';
 import { ServerConfig } from './config/server-config.js';
-import { database } from './index.js';
 import { initLogger, logger } from './logger.js';
-import serverController from './server-controller.js';
+import { ServerController } from './server-controller.js';
 
-const program = {
-  get server() {
-    return this.server_;
-  },
-  async run(databaseSetup, routes) {
+export class Program {
+  async init() {
     try {
-      const serverConfig = await new ServerConfig().config();
+      this.serverConfig = await new ServerConfig().config();
 
-      const {
-        helmet,
-        cors,
-        PORT: port,
-        SSLPORT: sslPort,
-        logLevel = 'info',
-        pidFile,
-        listenOn,
-        db,
-      } = serverConfig;
+      const { helmet, cors, logLevel = 'info', pidFile, db } = this.serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -34,91 +21,38 @@ const program = {
 
       const databaseConfig = clone(db);
 
-      const fastify = await serverController.setupExpress({
+      this.fastify = await ServerController.createServer({
         helmet,
         cors,
         logLevel,
         dbConfig: databaseConfig,
-        dbSetup: databaseSetup,
       });
-
-      // // await this.initDb(dbConfig, fastify);
-      // await dbSetup(fastify);
-
-      await this.setupRoutes(fastify, routes);
-      serverController.startServer({
-        port,
-        sslPort,
-        listenOn,
-      });
-
-      this.server_ = serverController.expressServer;
     } catch (error) {
       console.warn(util.inspect(error));
       throw new Error('Error: failed to initialise website');
     }
-  },
+  }
+
+  async register(plugin, options) {
+    await this.fastify.register(plugin, options);
+  }
+
+  startServer() {
+    const { PORT: port, SSLPORT: sslPort, listenOn } = this.serverConfig;
+    ServerController.startServer(this.fastify, {
+      port,
+      sslPort,
+      listenOn,
+    });
+  }
 
   async shutdown() {
-    serverController.stopServer().then(() => {
-      database.dispose();
+    ServerController.stopServer().then(() => {
+      // database.dispose();
       logger.info('server is stopping');
     });
-  },
-
-  // async initDb(dbConfig, fastify) {
-  //   if (!dbConfig) {
-  //     throw Error('Error: no database info found');
-  //   }
-  //   const dbg = dbConfig;
-  //   try {
-  //     await db.init(dbg, {});
-  //     await db.jsonwebtokens.createIndex(
-  //       {
-  //         keyId: 1,
-  //       },
-  //       {
-  //         unique: true,
-  //       },
-  //     );
-  //   } catch (error) {
-  //     logger.warn(util.inspect(error));
-  //     db.dispose();
-  //     throw Error('Error: cannot connect to database');
-  //   }
-  // },
-
-  async setupRoutes(fastify, routes) {
-    await routes(fastify);
-
-    // let maxAge = '5m';
-    // pinoLogger && app.use(pinoLogger);
-
-    // if (app.get('env') === 'development') {
-    //   maxAge = '0';
-    // }
-
-    // app.use(express.urlencoded());
-
-    // app.use(
-    //   express.json({
-    //     limit: '50mb',
-    //   }),
-    // );
-
-    // // uncomment to add support for csrf token;
-    // // app.use(csurf());
-
-    // app.use('/', routes(maxAge));
-
-    // respond to not found and errors as a last resort.
-    // notfound(serverController);
-  },
-};
-
-const pgm = Object.create(program);
-
-export { pgm as program };
+  }
+}
 
 // ===
 // Private functions
@@ -129,11 +63,15 @@ function clone(o) {
     ? // eslint-disable-next-line unicorn/no-nested-ternary
       Array.isArray(o) // if cloning an array
       ? o.map(element => clone(element)) // clone each of its elements
-      : // eslint-disable-next-line unicorn/no-array-reduce
-        Object.keys(o).reduce(
-          // otherwise reduce every key in the object
-          (r, k) => ((r[k] = clone(o[k])), r),
-          {}, // and save its cloned value into a new object
-        )
+      : cloneAll(o)
     : o;
+}
+
+function cloneAll(o) {
+  const ca = {};
+
+  for (const key of Object.keys(o)) {
+    ca[key] = clone(o[key]);
+  }
+  return ca;
 }

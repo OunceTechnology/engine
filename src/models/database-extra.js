@@ -6,13 +6,9 @@ const Database = {
   ...databaseTokens,
 
   async deleteEverything() {
-    const collections = await database
-      .listCollections({}, { nameOnly: true })
-      .toArray();
+    const collections = await database.listCollections({}, { nameOnly: true }).toArray();
 
-    return Promise.all(
-      collections.map(({ name }) => database.dropCollection(name)),
-    );
+    return Promise.all(collections.map(({ name }) => database.dropCollection(name)));
   },
 };
 

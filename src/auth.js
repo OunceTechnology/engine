@@ -11,11 +11,7 @@ export class Auth {
     // normalize username
     const conditions = isEmail
       ? {
-          $or: [
-            { username: email },
-            { email },
-            { lowerEmail: email.toLowerCase() },
-          ],
+          $or: [{ username: email }, { email }, { lowerEmail: email.toLowerCase() }],
         }
       : { _id: new this.ObjectId(email) };
 

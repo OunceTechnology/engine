@@ -11,11 +11,11 @@ class UserHelper {
   }
 
   async encrypt(value) {
-    return value === void 0 ? value : (value.subType === 6 ? value : this.encryptFn(value));
+    return value === void 0 ? value : value.subType === 6 ? value : this.encryptFn(value);
   }
 
   async decrypt(value) {
-    return value === void 0 ? value : (value.sub_type === 6 ? this.decryptFn(value) : value);
+    return value === void 0 ? value : value.sub_type === 6 ? this.decryptFn(value) : value;
   }
 
   async encryptedUser({ username, name: { first = '', last = '' } = {}, email, lowerEmail, ...user }) {
@@ -40,12 +40,14 @@ class UserHelper {
   }
 
   async user({ _id, username, name: { first = '', last = '' } = {}, email = '', lowerEmail, ...user }) {
+    const decrypted = await this.decrypt(lowerEmail ?? email);
+
     const decoded = {
       _id: _id?.toString(),
       ...user,
       username: await this.decrypt(username),
       email: await this.decrypt(email),
-      lowerEmail: (await this.decrypt(lowerEmail ?? email)).toLowerCase(),
+      lowerEmail: decrypted.toLowerCase(),
       name: {
         first: await this.decrypt(first),
         last: await this.decrypt(last),
