@@ -1,8 +1,8 @@
 import Fastify from 'fastify';
-import fastifyFormbody from 'fastify-formbody';
-import fastifyHelmet from 'fastify-helmet';
-import fastifyMongodb from 'fastify-mongodb';
-import fastifySensible from 'fastify-sensible';
+import fastifyFormbody from '@fastify/formbody';
+import fastifyHelmet from '@fastify/helmet';
+import fastifyMongodb from '@fastify/mongodb';
+import fastifySensible from '@fastify/sensible';
 import mongodb from 'mongodb';
 import { Buffer } from 'node:buffer';
 import process from 'node:process';
@@ -36,7 +36,11 @@ export const ServerController = {
     // As a failsafe use port 0 if the input isn't defined
     // this will result in a random port being assigned
     // See : https://nodejs.org/api/http.html for details
-    if (typeof port === 'undefined' || port === null || Number.isNaN(Number.parseInt(port, 10))) {
+    if (
+      typeof port === 'undefined' ||
+      port === null ||
+      Number.isNaN(Number.parseInt(port, 10))
+    ) {
       port = 0;
     }
 
@@ -50,7 +54,11 @@ export const ServerController = {
     });
   },
 
-  async createServer({ helmet = _defaultHelmetDirectives, logLevel, dbConfig }) {
+  async createServer({
+    helmet = _defaultHelmetDirectives,
+    logLevel,
+    dbConfig,
+  }) {
     // eslint-disable-next-line new-cap
     const fastify = Fastify({ trustProxy: true, logger: { level: logLevel } });
 
@@ -90,13 +98,18 @@ export const ServerController = {
       const database__ = new Proxy(database_, {
         get: (object, property) => {
           const databaseProperty = object[property] || database_[property];
-          return databaseProperty ? databaseProperty : database_.collection(property);
+          return databaseProperty
+            ? databaseProperty
+            : database_.collection(property);
         },
       });
       fastify.mongo.db = database__;
 
       if (csfle) {
-        const key = typeof csfle.masterKey === 'string' ? Buffer.from(csfle.masterKey, 'base64') : csfle.masterKey;
+        const key =
+          typeof csfle.masterKey === 'string'
+            ? Buffer.from(csfle.masterKey, 'base64')
+            : csfle.masterKey;
 
         const _kmsHandler = new KmsHandler({
           kmsProviders: {
