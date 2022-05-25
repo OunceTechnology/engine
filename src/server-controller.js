@@ -44,7 +44,13 @@ export const ServerController = {
       port = 0;
     }
 
-    fastify.listen(port, listenOn, function (error, address) {
+    const fastifyOptions = { port };
+
+    if (listenOn !== undefined) {
+      fastifyOptions.host = listenOn;
+    }
+
+    fastify.listen(fastifyOptions, function (error, address) {
       if (error) {
         fastify.log.error(error);
         // eslint-disable-next-line unicorn/no-process-exit
