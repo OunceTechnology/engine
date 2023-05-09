@@ -10,7 +10,13 @@ export class Program {
     try {
       this.serverConfig = await new ServerConfig().config();
 
-      const { helmet, cors, logLevel = 'info', pidFile, db } = this.serverConfig;
+      const {
+        helmet,
+        cors,
+        logLevel = 'info',
+        pidFile,
+        db,
+      } = this.serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -35,6 +41,15 @@ export class Program {
 
   async register(plugin, options) {
     await this.fastify.register(plugin, options);
+  }
+
+  async registerPlugins(plugins) {
+    for await (const pluginOrConfig of plugins) {
+      const { plugin, options } = pluginOrConfig.plugin
+        ? pluginOrConfig
+        : { plugin: pluginOrConfig };
+      await this.fastify.register(plugin, options);
+    }
   }
 
   startServer() {
