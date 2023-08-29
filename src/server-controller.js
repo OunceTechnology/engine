@@ -1,14 +1,11 @@
 import Fastify from 'fastify';
 import fastifyFormbody from '@fastify/formbody';
 import fastifyHelmet from '@fastify/helmet';
-import fastifyMongodb from '@fastify/mongodb';
+import engineMongodb from './models/engine-mongodb.js';
 import fastifySensible from '@fastify/sensible';
-import mongodb from 'mongodb';
 import { Buffer } from 'node:buffer';
 import process from 'node:process';
 import { engineDatabasePlugin, KmsHandler } from './models/index.js';
-
-const { MongoClient } = mongodb;
 
 const _defaultHelmetDirectives = {
   optionsDefault: true,
@@ -85,17 +82,7 @@ export const ServerController = {
     await fastify.register(fastifyHelmet, helmetOptions);
     const { url, database, csfle, options } = dbConfig;
 
-    // note: pass in client as letting fastifyMongodb create it
-    // fails since v4.0.0
-    const client = await MongoClient.connect(url, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      ...options,
-    });
-
-    fastify.addHook('onClose', () => client.close());
-
-    await fastify.register(fastifyMongodb, { url, client });
+    await fastify.register(engineMongodb, { url, ...options });
 
     await fastify.register(async (fastify, _, next) => {
       const client = fastify.mongo.client;
