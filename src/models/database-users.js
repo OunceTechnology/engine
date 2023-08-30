@@ -8,11 +8,12 @@ export class Users {
     this.kmsHandler = kmsHandler;
   }
   async deleteUserById(id) {
-    const {
-      lastErrorObject: { n },
-    } = await this.db.users.findOneAndDelete({ _id: new this.ObjectId(id) }, { projection: { _id: 1 } });
+    const value = await this.db.users.findOneAndDelete(
+      { _id: new this.ObjectId(id) },
+      { projection: { _id: 1 } },
+    );
 
-    if (n !== 1) {
+    if (!value) {
       throw new Error('User account not deleted');
     }
   }
@@ -47,31 +48,37 @@ export class Users {
       }
     }
 
-    const {
-      lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate({ _id: new this.ObjectId(id) }, update, {
-      projection: { _id: 1, username: 1 },
-    });
+    const value = await this.db.users.findOneAndUpdate(
+      { _id: new this.ObjectId(id) },
+      update,
+      {
+        projection: { _id: 1, username: 1 },
+      },
+    );
 
-    if (n !== 1) {
+    if (!value) {
       throw new Error('Failed updating user');
     }
 
     if (updateAdded.$addToSet) {
-      const {
-        lastErrorObject: { n: n2 },
-      } = await this.db.users.findOneAndUpdate({ _id: new this.ObjectId(id) }, updateAdded, {
-        projection: { _id: 1 },
-      });
+      const value2 = await this.db.users.findOneAndUpdate(
+        { _id: new this.ObjectId(id) },
+        updateAdded,
+        {
+          projection: { _id: 1 },
+        },
+      );
 
-      if (n2 !== 1) {
+      if (!value2) {
         throw new Error('Failed updating user');
       }
     }
   }
 
   async getUserById(id, { nameOnly = false } = {}) {
-    const projection = nameOnly ? { email: 1, username: 1, name: 1 } : { password: 0 };
+    const projection = nameOnly
+      ? { email: 1, username: 1, name: 1 }
+      : { password: 0 };
     const encryptedUser = await this.db.users.findOne(
       { _id: new this.ObjectId(id) },
       {
@@ -92,7 +99,7 @@ export class Users {
   }
 
   async setUserPassword(id, password) {
-    const { ok } = await this.db.users.findOneAndUpdate(
+    const value = await this.db.users.findOneAndUpdate(
       { _id: new this.ObjectId(id) },
       {
         $set: { password, passwordLastUpdated: new Date() },
@@ -103,7 +110,7 @@ export class Users {
       { projection: { _id: 1, username: 1 } },
     );
 
-    if (!ok) {
+    if (!value) {
       throw new Error('Failed updating password, try again.');
     }
   }
@@ -147,7 +154,11 @@ export class Users {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const users = await Promise.all(databaseUsers.map(async databaseUser => await userHelper.user(databaseUser)));
+    const users = await Promise.all(
+      databaseUsers.map(
+        async databaseUser => await userHelper.user(databaseUser),
+      ),
+    );
 
     return users;
   }
@@ -228,10 +239,7 @@ export class Users {
   }
 
   async activateAccount(code, date = new Date()) {
-    const {
-      value,
-      lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate(
+    const value = await this.db.users.findOneAndUpdate(
       {
         'activationToken.token': code,
         'activationToken.validUntil': {
@@ -248,7 +256,7 @@ export class Users {
       { projection: { status: 1 } },
     );
 
-    return n === 1 ? value : undefined;
+    return value;
   }
 
   async setFields(subject, fields = {}) {
@@ -257,13 +265,16 @@ export class Users {
 
     const queryField = await userHelper.encrypt(subject.toLowerCase());
 
-    const query = subject.includes('@') ? { lowerEmail: queryField } : { username: queryField };
+    const query = subject.includes('@')
+      ? { lowerEmail: queryField }
+      : { username: queryField };
 
-    const {
-      value,
-      lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate(query, { $set: fields }, { projection: { password: 0 } });
-    if (n == 1) {
+    const value = await this.db.users.findOneAndUpdate(
+      query,
+      { $set: fields },
+      { projection: { password: 0 } },
+    );
+    if (value) {
       return await userHelper.user(value);
     }
   }
@@ -272,15 +283,12 @@ export class Users {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const {
-      value,
-      lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate(
+    const value = await this.db.users.findOneAndUpdate(
       { _id: new this.ObjectId(id) },
       { $set: fields },
       { projection: { password: 0 } },
     );
-    if (n == 1) {
+    if (value) {
       return await userHelper.user(value);
     }
   }
@@ -289,15 +297,12 @@ export class Users {
     const encryptDecrypt = this.kmsHandler.getEncryptDecrypt();
     const userHelper = new UserHelper(encryptDecrypt);
 
-    const {
-      value,
-      lastErrorObject: { n },
-    } = await this.db.users.findOneAndUpdate(
+    const value = await this.db.users.findOneAndUpdate(
       { _id: new this.ObjectId(id) },
       { $set: { status: 'pending' } },
       { projection: { _id: 1 } },
     );
-    if (n == 1) {
+    if (value) {
       return await userHelper.user(value);
     }
   }

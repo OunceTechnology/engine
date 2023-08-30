@@ -11,14 +11,12 @@ export class Teams {
   }
 
   async deleteTeam(teamId) {
-    const {
-      lastErrorObject: { n },
-    } = await this.db.teams.findOneAndDelete(
+    const value = await this.db.teams.findOneAndDelete(
       { _id: new this.ObjectId(teamId) },
       { projection: { _id: 1 } },
     );
 
-    if (n !== 1) {
+    if (!value) {
       throw new Error('Team not deleted');
     }
   }
@@ -46,15 +44,13 @@ export class Teams {
     const { _id: id, ...team } = teamSpec;
     const _id = new this.ObjectId(id);
 
-    const {
-      lastErrorObject: { n },
-    } = await this.db.teams.findOneAndUpdate(
+    const value = await this.db.teams.findOneAndUpdate(
       { _id },
       { $set: team },
       { projection: { _id: 1 } },
     );
 
-    if (n !== 1) {
+    if (!value) {
       throw new Error('Failed updating team');
     }
   }
