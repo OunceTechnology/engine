@@ -84,7 +84,7 @@ export const ServerController = {
 
     await fastify.register(engineMongodb, { url, ...options });
 
-    await fastify.register(async (fastify, _, next) => {
+    await fastify.register(async (fastify, _) => {
       const client = fastify.mongo.client;
       const database_ = client.db(database);
 
@@ -118,7 +118,6 @@ export const ServerController = {
 
         fastify.mongo.kmsHandler = _kmsHandler;
       }
-      next();
     });
 
     await fastify.register(engineDatabasePlugin, {});
