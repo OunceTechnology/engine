@@ -14,7 +14,9 @@ async function getLocales(localeFolder) {
   try {
     const files = await fs.readdir(localeFolder);
 
-    const locales = files.filter(file => path.extname(file) === '.json').map(file => path.basename(file, '.json'));
+    const locales = files
+      .filter(file => path.extname(file) === '.json')
+      .map(file => path.basename(file, '.json'));
 
     return locales;
   } catch (error) {
@@ -55,11 +57,21 @@ async function send(options = {}) {
     let transport = {};
 
     if (pickup !== undefined && pickup) {
-      const directory = path.join(dirname, typeof pickup === 'string' ? pickup : './pickup');
+      const directory = path.join(
+        dirname,
+        typeof pickup === 'string' ? pickup : './pickup',
+      );
 
       transport = pickupTransport({
         directory,
       });
+    } else {
+      transport = {
+        host: config.SMTP_HOST ?? 'localhost',
+        port: config.SMTP_PORT ?? 587,
+        secure: config.SMTP_SECURE ?? false,
+        auth: config.SMTP_AUTH,
+      };
     }
     transporter = nodemailer.createTransport(transport);
   }
