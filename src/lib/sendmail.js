@@ -28,7 +28,15 @@ async function getLocales(localeFolder) {
 async function send(options = {}) {
   const dirname = join(appRoot.path, 'pickup');
 
-  const { SMTP_PICKUP: pickup, sendMail, ProductName } = serverConfig;
+  const {
+    SMTP_PICKUP: pickup,
+    sendMail,
+    ProductName,
+    SMTP_HOST,
+    SMTP_AUTH,
+    SMTP_PORT,
+    SMTP_SECURE,
+  } = serverConfig;
 
   const localeFolder = sendMail.localePath ?? './locales';
 
@@ -67,10 +75,10 @@ async function send(options = {}) {
       });
     } else {
       transport = {
-        host: config.SMTP_HOST ?? 'localhost',
-        port: config.SMTP_PORT ?? 587,
-        secure: config.SMTP_SECURE ?? false,
-        auth: config.SMTP_AUTH,
+        host: SMTP_HOST ?? 'localhost',
+        port: SMTP_PORT ?? 587,
+        secure: SMTP_SECURE ?? false,
+        auth: SMTP_AUTH,
       };
     }
     transporter = nodemailer.createTransport(transport);
