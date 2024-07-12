@@ -5,7 +5,7 @@ export { default as RandomString } from './lib/random-string.js';
 export { default as sendmail } from './lib/sendmail.js';
 export { logger } from './logger.js';
 export { Tokens } from './models/database-tokens.js';
-export { UserHelper } from './models/database-users.js';
+export { UserHelper, Users } from './models/database-users.js';
 export { default as userUtils } from './models/user-utils.js';
 export { default as Passwords } from './passwords.js';
 export { Program } from './server.js';
