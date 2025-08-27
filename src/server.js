@@ -6,10 +6,18 @@ import { ServerController } from './server-controller.js';
 import { ServerConfig } from './config/server-config.js';
 
 export class Program {
+  #config = {};
+
   async init(serverConfig) {
     try {
-      const config = serverConfig ?? this.readServerConfig();
-      const { helmet, cors, logLevel = 'info', pidFile, db } = config;
+      this.#config = serverConfig ?? (await this.readServerConfig());
+      const { helmet, cors, logLevel = 'info', pidFile, db } = this.#config;
+
+      const credentials = await this.loadCredentials();
+
+      db.options = this.makeDbOptions(credentials);
+
+      db.csfle = this.makeDbCsfle(credentials);
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -32,12 +40,37 @@ export class Program {
     }
   }
 
+  get keyAltNames() {
+    return 'db-data-key';
+  }
+
+  makeDbOptions({ dbUsername: username, dbPassword: password }) {
+    const options = {
+      auth: { username, password },
+      authSource: 'admin',
+    };
+
+    return options;
+  }
+
+  makeDbCsfle({ dbMasterKey: masterKey }) {
+    const csfle = {
+      keyAltNames: this.keyAltNames,
+      masterKey,
+    };
+
+    return csfle;
+  }
+  async loadCredentials() {
+    const dbPassword = process.env.DB_PASSWORD;
+    const dbUsername = process.env.DB_USERNAME;
+    const dbMasterKey = process.env.DB_MASTERKEY;
+
+    return { dbPassword, dbUsername, dbMasterKey };
+  }
+
   async readServerConfig() {
-    const serverConfig = await new ServerConfig().config();
-
-    const { helmet, cors, logLevel = 'info', pidFile, db } = serverConfig;
-
-    return { helmet, cors, logLevel, pidFile, db };
+    return new ServerConfig().config();
   }
 
   async register(plugin, options) {
@@ -54,7 +87,7 @@ export class Program {
   }
 
   startServer() {
-    const { PORT: port, SSLPORT: sslPort, listenOn } = this.serverConfig;
+    const { PORT: port, SSLPORT: sslPort, listenOn } = this.#config;
     ServerController.startServer(this.fastify, {
       port,
       sslPort,
