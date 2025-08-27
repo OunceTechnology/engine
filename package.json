@@ -1,6 +1,6 @@
 {
   "name": "@ounce/engine",
-  "version": "25.8.1",
+  "version": "25.8.2",
   "description": "Ounce engine",
   "main": "./src/index.js",
   "exports": {
