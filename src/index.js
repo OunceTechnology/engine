@@ -9,3 +9,4 @@ export { UserHelper, Users } from './models/database-users.js';
 export { default as userUtils } from './models/user-utils.js';
 export { default as Passwords } from './passwords.js';
 export { Program } from './server.js';
+export { ServerConfig } from './config/server-config.js';

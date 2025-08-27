@@ -1,22 +1,15 @@
 import fs from 'node:fs';
 import process from 'node:process';
 import util from 'node:util';
-import { ServerConfig } from './config/server-config.js';
 import { initLogger, logger } from './logger.js';
 import { ServerController } from './server-controller.js';
+import { ServerConfig } from './config/server-config.js';
 
 export class Program {
-  async init() {
+  async init(serverConfig) {
     try {
-      this.serverConfig = await new ServerConfig().config();
-
-      const {
-        helmet,
-        cors,
-        logLevel = 'info',
-        pidFile,
-        db,
-      } = this.serverConfig;
+      const config = serverConfig ?? this.readServerConfig();
+      const { helmet, cors, logLevel = 'info', pidFile, db } = config;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -37,6 +30,14 @@ export class Program {
       console.warn(util.inspect(error));
       throw new Error('Error: failed to initialise website');
     }
+  }
+
+  async readServerConfig() {
+    const serverConfig = await new ServerConfig().config();
+
+    const { helmet, cors, logLevel = 'info', pidFile, db } = serverConfig;
+
+    return { helmet, cors, logLevel, pidFile, db };
   }
 
   async register(plugin, options) {
