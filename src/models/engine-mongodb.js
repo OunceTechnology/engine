@@ -56,4 +56,4 @@ async function engineMongodb(fastify, options) {
   }
 }
 
-export default fp(engineMongodb, { fastify: '4.x', name: '@ounce/mongodb' });
+export default fp(engineMongodb, { fastify: '5.x', name: '@ounce/mongodb' });
