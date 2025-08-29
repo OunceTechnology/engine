@@ -1,5 +1,4 @@
 import appRoot from 'app-root-path';
-import serverConfig from 'config';
 import Email from 'email-templates';
 import fs from 'node:fs/promises';
 import path, { join } from 'node:path';
@@ -10,35 +9,27 @@ import pickupTransport from './pickup-transport.js';
 
 let transporter;
 
-async function getLocales(localeFolder) {
-  try {
-    const files = await fs.readdir(localeFolder);
-
-    const locales = files
-      .filter(file => path.extname(file) === '.json')
-      .map(file => path.basename(file, '.json'));
-
-    return locales;
-  } catch (error) {
-    console.dir(error);
-    return ['en'];
-  }
-}
-
-async function send(options = {}) {
+/**
+ *
+ * @param {Object} options
+ * @param {Object} options.serverConfig
+ * @returns
+ */
+export async function send(options) {
   const dirname = join(appRoot.path, 'pickup');
+  const { serverConfig } = options;
 
   const {
-    SMTP_PICKUP: pickup,
-    sendMail,
+    SMTP_PICKUP: smtpPickup,
+    sendMail: { localePath, templateDir, juice: sendmailJuice, fallbacks },
     ProductName,
-    SMTP_HOST,
-    SMTP_AUTH,
-    SMTP_PORT,
-    SMTP_SECURE,
+    SMTP_HOST: smtpHost,
+    SMTP_AUTH: smtpAuth,
+    SMTP_PORT: smtpPort,
+    SMTP_SECURE: smtpSecure,
   } = serverConfig;
 
-  const localeFolder = sendMail.localePath ?? './locales';
+  const localeFolder = localePath ?? './locales';
 
   const locales = await getLocales(localeFolder);
 
@@ -64,10 +55,10 @@ async function send(options = {}) {
   if (!transporter) {
     let transport = {};
 
-    if (pickup !== undefined && pickup) {
+    if (smtpPickup !== undefined && smtpPickup) {
       const directory = path.join(
         dirname,
-        typeof pickup === 'string' ? pickup : './pickup',
+        typeof smtpPickup === 'string' ? smtpPickup : './pickup',
       );
 
       transport = pickupTransport({
@@ -75,10 +66,10 @@ async function send(options = {}) {
       });
     } else {
       transport = {
-        host: SMTP_HOST ?? 'localhost',
-        port: SMTP_PORT ?? 587,
-        secure: SMTP_SECURE ?? false,
-        auth: SMTP_AUTH,
+        host: smtpHost ?? 'localhost',
+        port: smtpPort ?? 587,
+        secure: smtpSecure ?? false,
+        auth: smtpAuth,
       };
     }
     transporter = nodemailer.createTransport(transport);
@@ -86,8 +77,8 @@ async function send(options = {}) {
 
   const templateName = options.templateName || '';
 
-  const templateFolder = sendMail?.templateDir || './templates';
-  const juice = options.juice ?? sendMail?.juice ?? false;
+  const templateFolder = templateDir ?? './templates';
+  const juice = options.juice ?? sendmailJuice ?? false;
 
   const templateDirectory = path.resolve(templateFolder);
 
@@ -104,7 +95,7 @@ async function send(options = {}) {
     i18n: {
       defaultLocale: 'en',
       locales,
-      fallbacks: sendMail.fallbacks ?? {},
+      fallbacks: fallbacks ?? {},
       syncFiles: false,
       updateFiles: false,
       objectNotation: true,
@@ -154,4 +145,26 @@ async function send(options = {}) {
   }
 }
 
-export default send;
+//
+// private functions
+//
+
+/**
+ *
+ * @param {string} localeFolder
+ * @returns { Promise<[string]>}
+ */
+async function getLocales(localeFolder) {
+  try {
+    const files = await fs.readdir(localeFolder);
+
+    const locales = files
+      .filter(file => path.extname(file) === '.json')
+      .map(file => path.basename(file, '.json'));
+
+    return locales;
+  } catch (error) {
+    console.dir(error);
+    return ['en'];
+  }
+}
