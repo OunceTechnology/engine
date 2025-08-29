@@ -2,7 +2,7 @@ export { ObjectId } from 'mongodb';
 export { Auth } from './auth.js';
 export { hexOrObjectId } from './hex-or-objectid.js';
 export { default as RandomString } from './lib/random-string.js';
-export { default as sendmail } from './lib/sendmail.js';
+export { send as sendmail } from './lib/sendmail.js';
 export { logger } from './logger.js';
 export { Tokens } from './models/database-tokens.js';
 export { UserHelper, Users } from './models/database-users.js';
