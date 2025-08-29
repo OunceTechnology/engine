@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import fastifyFormbody from '@fastify/formbody';
+import fastifyMultipart from '@fastify/multipart';
 import fastifyHelmet from '@fastify/helmet';
 import engineMongodb from './models/engine-mongodb.js';
 import fastifySensible from '@fastify/sensible';
@@ -68,6 +69,7 @@ export const ServerController = {
     await fastify.register(fastifySensible);
 
     await fastify.register(fastifyFormbody);
+    await fastify.register(fastifyMultipart);
 
     if (helmet.contentSecurityPolicy.optionsDefault == undefined) {
       helmet.contentSecurityPolicy.optionsDefault = true;
