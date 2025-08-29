@@ -12,7 +12,6 @@ let transporter;
 /**
  *
  * @param {Object} options
- * @param {Object} options.serverConfig
  * @returns
  */
 export async function send(options) {
@@ -152,7 +151,7 @@ export async function send(options) {
 /**
  *
  * @param {string} localeFolder
- * @returns { Promise<[string]>}
+ * @returns { Promise<string[]>}
  */
 async function getLocales(localeFolder) {
   try {
