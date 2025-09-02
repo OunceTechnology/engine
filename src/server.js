@@ -15,9 +15,21 @@ export class Program {
 
       const credentials = await this.loadCredentials();
 
-      db.options = this.makeDbOptions(credentials);
+      const optionsNoAuth = { auth, ...db.options };
 
-      db.csfle = this.makeDbCsfle(credentials);
+      db.options = {
+        auth: {
+          username: credentials.dbUsername,
+          password: credentials.dbPassword,
+        },
+        authSource: 'admin',
+        ...optionsNoAuth,
+      };
+
+      db.csfle = {
+        keyAltNames: credentials.dbKeyAltNames ?? this.keyAltNames,
+        masterKey: credentials.dbMasterKey,
+      };
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
@@ -44,29 +56,13 @@ export class Program {
     return 'db-data-key';
   }
 
-  makeDbOptions({ dbUsername: username, dbPassword: password }) {
-    const options = {
-      auth: { username, password },
-      authSource: 'admin',
-    };
-
-    return options;
-  }
-
-  makeDbCsfle({ dbMasterKey: masterKey }) {
-    const csfle = {
-      keyAltNames: this.keyAltNames,
-      masterKey,
-    };
-
-    return csfle;
-  }
   async loadCredentials() {
     const dbPassword = process.env.DB_PASSWORD;
     const dbUsername = process.env.DB_USERNAME;
     const dbMasterKey = process.env.DB_MASTERKEY;
+    const dbKeyAltNames = process.env.DB_KEYALTNAMES;
 
-    return { dbPassword, dbUsername, dbMasterKey };
+    return { dbPassword, dbUsername, dbMasterKey, dbKeyAltNames };
   }
 
   async readServerConfig() {
