@@ -15,7 +15,7 @@ export class Program {
 
       const credentials = await this.loadCredentials();
 
-      const optionsNoAuth = { auth, ...db.options };
+      const { auth, ...optionsNoAuth } = db.options;
 
       db.options = {
         auth: {
