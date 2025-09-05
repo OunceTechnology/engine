@@ -48,7 +48,7 @@ export const ServerController = {
       fastifyOptions.host = listenOn;
     }
 
-    fastify.listen(fastifyOptions, function (error, address) {
+    fastify.listen(fastifyOptions, (error, address) => {
       if (error) {
         fastify.log.error(error);
         // eslint-disable-next-line unicorn/no-process-exit
@@ -71,7 +71,10 @@ export const ServerController = {
     await fastify.register(fastifyFormbody);
     await fastify.register(fastifyMultipart);
 
-    if (helmet.contentSecurityPolicy.optionsDefault == undefined) {
+    if (
+      helmet.contentSecurityPolicy &&
+      helmet.contentSecurityPolicy.optionsDefault == undefined
+    ) {
       helmet.contentSecurityPolicy.optionsDefault = true;
     }
 

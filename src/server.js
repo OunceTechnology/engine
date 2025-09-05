@@ -10,7 +10,7 @@ export class Program {
 
   async init(serverConfig) {
     try {
-      this.#config = serverConfig ?? (await this.readServerConfig());
+      this.#config = clone(serverConfig ?? (await this.readServerConfig()));
       const { helmet, cors, logLevel = 'info', pidFile, db } = this.#config;
 
       const credentials = await this.loadCredentials();
@@ -38,13 +38,11 @@ export class Program {
         fs.writeFileSync(pidFile, String(process.pid));
       }
 
-      const databaseConfig = clone(db);
-
       this.fastify = await ServerController.createServer({
         helmet,
         cors,
         logLevel,
-        dbConfig: databaseConfig,
+        dbConfig: db,
       });
     } catch (error) {
       console.warn(util.inspect(error));
